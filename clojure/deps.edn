@@ -1,0 +1,5 @@
+{:paths ["src"]
+ :test
+ {:extra-paths ["test"]
+  :extra-deps
+  {lambdaisland/kaocha {:mvn/version "0.0-413"}}}}
