@@ -1,4 +1,6 @@
 {:paths ["src"]
+ :deps {org.clojure/tools.logging {:mvn/version "0.4.1"}
+        cheshire {:mvn/version "5.9.0"}}
  :test
  {:extra-paths ["test"]
   :extra-deps

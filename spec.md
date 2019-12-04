@@ -17,30 +17,11 @@ HMAC-SHA256
 Token consists of:
 
 * Set of Capabilitites
-* Capability is a hiearachial list which represents rights to execute some particular action
 * Validity period
 
-Token = (RootToken | WrapToken) Sign
-
-RootToken {
-  Capability = BYTE-ARRAY*
-  ExpireAt? = NUMBER
-}
-
-WrapToken {
-  Token = Token
-  CapabilityRestriction = BYTE-ARRAY*
-  CapKeyToken = Token
-  ExpireAt? = NUMBER
-}
-
-r[oot-token]/2
-w[rap-token]/3
-c[apability]/n
-
-token[t] = root-token | wrap-token
+token = root-token | wrap-token
 root-token = capability sign
-wrap-token = token cap-key sign
+wrap-token = headers capability cap-key sign
 
 sign = BYTE-ARRAY
 cap-key = BYTE-ARRAY
@@ -55,22 +36,26 @@ sign = HMAC-SHA256(capability, secret)
 
 ### Client
 
-* wrap : token -> sub-capability -> sub-expiration? -> cap-key-token -> secret -> token
-* capability : token -> capability
+* wrap : token -> sub-capability -> expire-at? -> cap-key -> secret -> token
+
+Optional:
+* capability : token -> capability+
 * expire-at : token -> expire-at?
 
 ### Service
 
 * blacksmith : root-secret
-* forge : blacksmith -> capability -> expiration? -> token
-* check : blacksmith -> now -> token -> capability -> invalid | expired | non-authorized | ok
+* forge : blacksmith -> capability -> token
+* check-root : blacksmith -> root-token -> invalid | bad-sign | capability
 
 ### Bookkeeper
 
-* 
+* bookkeeper : (cap-key -> secret)
+* check : bookkeeper -> now -> token -> invalid | bad-sign | expired | (root-token, sub-capability*)
 
-## Capability verification
+### Utils
+
+* check-all : bookkeeper -> blacksmith -> now -> token -> capability+
 
 ## Representation
 
-### ASCII
