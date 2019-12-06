@@ -7,7 +7,7 @@
            javax.crypto.spec.SecretKeySpec))
 
 (defn base64-encode [bytes]
-  (.encodeToString (Base64/getUrlEncoder) bytes))
+  (.encodeToString (.withoutPadding (Base64/getUrlEncoder)) bytes))
 
 (defn base64-encode-str [^String s]
   (base64-encode (.getBytes s)))
@@ -47,67 +47,62 @@
     (catch Exception e
       (throw-error ::invalid e))))
 
-(defn make [{:keys [keywordize-keys?
-                    root-secet
-                    cap-secrets-provider] :as opts}]
+(defn blacksmith [{:keys [keywordize-keys?
+                          root-key
+                          cap-secrets-provider] :as opts}]
   opts)
+
+(defn wrap* [acc capability cap-key secret {:keys [expire-at]}]
+  (let [headers (->
+                 {:cpk cap-key}
+                 (cond-> expire-at
+                   (assoc :exp expire-at)))
+        intermediate (str acc (base64-encode-str (json/encode headers))
+                          "." (base64-encode-str (json/encode capability)))]
+    (str intermediate "." (sign intermediate secret))))
 
 ;; API
 
 (defn wrap
   ([token sub-capability cap-key secret]
    (wrap token sub-capability cap-key secret {}))
-  ([token sub-capability cap-key secret {:keys [expire-at]}]
-   (let [header (if expire-at
-                  {:expire-at expire-at}
-                  {})
-         intermediate (str token
-                           "." (base64-encode-str (json/encode header))
-                           "." (base64-encode-str (json/encode sub-capability))
-                           "." cap-key)]
-     (str intermediate "." (sign intermediate secret)))))
+  ([token sub-capability cap-key secret options]
+   (wrap* (str token ".") sub-capability cap-key secret options)))
 
-(defn forge [{:keys [root-secret]} capability]
-  (let [encoded (base64-encode-str (json/encode capability))]
-    (str encoded "." (sign encoded root-secret))))
-
-(defn check-root [{:keys [root-secret keywordize-keys?]} token]
-  (let [[capability sign-string :as all] (split-token token)]
-    (assert (= 2 (count all)) ::invalid)
-    (assert (= sign-string (sign capability root-secret)) ::bad-sign)
-    (try-parse-json keywordize-keys? capability)))
+(defn forge
+  ([blacksmith capability]
+   (forge blacksmith capability {}))
+  ([{:keys [root-key cap-secrets-provider]} capability options]
+   (let [secret (assert (cap-secrets-provider root-key) ::invalid-root-key)]
+     (wrap* "" capability root-key secret options))))
 
 (defn check* [{:keys [cap-secrets-provider
-                      keywordize-keys?]}
+                      keywordize-keys?
+                      root-key]}
               now
-              {:keys [acc sub-capabilities]}
-              [header capability cap-key sign-string]]
-  (let [acc' (str acc "." header "." capability "." cap-key)
-        secret (assert (cap-secrets-provider cap-key) ::bad-sign)]
-    (prn "---SECRET" secret sign-string (sign acc' secret)
-         acc')
+              {:keys [acc capabilities root?]}
+              [headers capability sign-string]]
+  (let [acc' (str acc headers "." capability)
+        {:keys [cpk exp]} (try-parse-json true headers)
+        _ (when root?
+            (assert (= cpk root-key) ::invalid))
+        secret (assert (cap-secrets-provider cpk) ::bad-sign)]
     (assert (= sign-string (sign acc' secret)) ::bad-sign)
-    (when-let [expire-at (:expire-at (try-parse-json true header))]
-      (assert (< now expire-at) ::expired))
-    (let [sub-capability (try-parse-json keywordize-keys? capability)]
-      {:acc (str acc' "." sign-string)
-       :sub-capabilities (conj sub-capabilities sub-capability)})))
+    (when exp
+      (assert (< now exp) ::expired))
+    (let [capability' (try-parse-json keywordize-keys? capability)]
+      {:root? false
+       :acc (str acc' "." sign-string ".")
+       :capabilities (conj capabilities capability')})))
 
 (defn check [capbac now token]
-  (let [[capability root-sign & parts] (split-token token)
-        _ (assert (and capability root-sign) ::invalid)
-        root-token (str capability "." root-sign)
-        _ (assert (= 0 (rem (count parts) 4)) ::invalid)]
-    [root-token
-     (:sub-capabilities
-      (reduce (partial check* capbac now) {:acc root-token
-                                           :sub-capabilities []}
-              (partition 4 parts)))]))
-
-(defn check-all [capbac now token]
-  (let [[root-token subc] (check capbac now token)]
-    (cons (check-root capbac root-token)
-          subc)))
+  (let [parts (split-token token)
+        _ (assert (= 0 (rem (count parts) 3)) ::invalid)]
+    (:capabilities
+     (reduce (partial check* capbac now) {:acc ""
+                                          :root? true
+                                          :capabilities []}
+             (partition 3 parts)))))
 
 (comment
   (forge "ololo" {:domain "foo"})

@@ -19,7 +19,7 @@ Token consists of:
 * Set of Capabilitites
 * Validity period
 
-token = root-token | wrap-token
+token = headers capability sign
 root-token = capability sign
 wrap-token = headers capability cap-key sign
 
@@ -36,7 +36,9 @@ sign = HMAC-SHA256(capability, secret)
 
 ### Client
 
-* wrap : token -> sub-capability -> expire-at? -> cap-key -> secret -> token
+* restrict : token -> sub-capability -> expire-at? -> cap-key -> secret -> token
+* lock : token -> key -> token
+* unlock : token -> key -> token
 
 Optional:
 * capability : token -> capability+
@@ -44,18 +46,11 @@ Optional:
 
 ### Service
 
-* blacksmith : root-secret
-* forge : blacksmith -> capability -> token
-* check-root : blacksmith -> root-token -> invalid | bad-sign | capability
+* blacksmith : root-key -> (cap-key -> secret)
+* forge : blacksmith -> capability -> expire-at? -> token
+* inherit : blacksmith -> token -> capability -> expire-at? -> token
+* check : blacksmith -> now -> token -> invalid | bad-sign | expired | capability+
 
-### Bookkeeper
-
-* bookkeeper : (cap-key -> secret)
-* check : bookkeeper -> now -> token -> invalid | bad-sign | expired | (root-token, sub-capability*)
-
-### Utils
-
-* check-all : bookkeeper -> blacksmith -> now -> token -> capability+
 
 ## Representation
 
