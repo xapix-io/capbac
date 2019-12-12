@@ -52,57 +52,121 @@
                           cap-secrets-provider] :as opts}]
   opts)
 
-(defn wrap* [acc capability cap-key secret {:keys [expire-at]}]
-  (let [headers (->
-                 {:cpk cap-key}
-                 (cond-> expire-at
-                   (assoc :exp expire-at)))
-        intermediate (str acc (base64-encode-str (json/encode headers))
-                          "." (base64-encode-str (json/encode capability)))]
-    (str intermediate "." (sign intermediate secret))))
-
 ;; API
 
-(defn wrap
+(defn restrict
   ([token sub-capability cap-key secret]
-   (wrap token sub-capability cap-key secret {}))
-  ([token sub-capability cap-key secret options]
-   (wrap* (str token ".") sub-capability cap-key secret options)))
+   (restrict token sub-capability cap-key secret {}))
+  ([token sub-capability cap-key secret {:keys [expire-at]}]
+   (let [headers (->
+                  {:cpk cap-key}
+                  (cond-> expire-at
+                    (assoc :exp expire-at)))
+         parsed-token (split-token token)
+         token-without-sign (str/join "." (butlast parsed-token))
+         intermediate (str token-without-sign
+                           "." (base64-encode-str (json/encode headers))
+                           "." (base64-encode-str (json/encode sub-capability)))]
+     (str intermediate "." (sign (str intermediate "." (last parsed-token)) secret)))))
+
+(defn lock [token key]
+  (let [parsed-token (split-token token)
+        token-without-sign (str/join "." (butlast parsed-token))]
+    (str token-without-sign "." (sign token key))))
 
 (defn forge
   ([blacksmith capability]
    (forge blacksmith capability {}))
-  ([{:keys [root-key cap-secrets-provider]} capability options]
-   (let [secret (assert (cap-secrets-provider root-key) ::invalid-root-key)]
-     (wrap* "" capability root-key secret options))))
+  ([{:keys [root-key cap-secrets-provider]} capability {:keys [expire-at]}]
+   (let [secret (assert (cap-secrets-provider root-key) ::invalid-root-key)
+         headers (->
+                  {:cpk root-key}
+                  (cond-> expire-at
+                    (assoc :exp expire-at)))
+         intermediate (str (base64-encode-str (json/encode headers))
+                           "." (base64-encode-str (json/encode capability)))]
+     (str intermediate "." (sign intermediate secret)))))
 
 (defn check* [{:keys [cap-secrets-provider
                       keywordize-keys?
                       root-key]}
               now
-              {:keys [acc capabilities root?]}
-              [headers capability sign-string]]
-  (let [acc' (str acc headers "." capability)
-        {:keys [cpk exp]} (try-parse-json true headers)
-        _ (when root?
-            (assert (= cpk root-key) ::invalid))
-        secret (assert (cap-secrets-provider cpk) ::bad-sign)]
-    (assert (= sign-string (sign acc' secret)) ::bad-sign)
-    (when exp
-      (assert (< now exp) ::expired))
-    (let [capability' (try-parse-json keywordize-keys? capability)]
-      {:root? false
-       :acc (str acc' "." sign-string ".")
-       :capabilities (conj capabilities capability')})))
+              {:keys [lock-keys]}
+              {:keys [acc capabilities root?
+                      intermediate-sign]}
+              parts]
+  (case (count parts)
+    1
+    (let [intermediate-sign (if (seq lock-keys)
+                              (reduce (fn [sign-string lock-key]
+                                        (sign (str acc sign-string) lock-key))
+                                      intermediate-sign lock-keys)
+                              intermediate-sign)
+          [sign-string] parts]
+      (assert (= sign-string intermediate-sign) ::bad-sign)
+      capabilities)
 
-(defn check [capbac now token]
-  (let [parts (split-token token)
-        _ (assert (= 0 (rem (count parts) 3)) ::invalid)]
-    (:capabilities
-     (reduce (partial check* capbac now) {:acc ""
-                                          :root? true
-                                          :capabilities []}
-             (partition 3 parts)))))
+    2
+    (let [[headers capability] parts
+          acc' (str acc headers "." capability)
+          {:keys [cpk exp]} (try-parse-json true headers)
+          _ (when root?
+              (assert (= cpk root-key) ::invalid))
+          secret (assert (cap-secrets-provider cpk) ::bad-sign)]
+      (when exp
+        (assert (< now exp) ::expired))
+      (let [capability' (try-parse-json keywordize-keys? capability)]
+        {:root? false
+         :acc (str acc' ".")
+         :intermediate-sign (if intermediate-sign
+                              (sign (str acc' "." intermediate-sign) secret)
+                              (sign acc' secret))
+         :capabilities (conj capabilities capability')}))))
+
+(defn check
+  ([capbac now token] (check capbac now token {}))
+  ([capbac now token {:keys [lock-keys] :as options}]
+   (let [parts (split-token token)
+         _ (assert (and (<= 3 (count parts))
+                        (= 1 (rem (count parts) 2))) ::invalid)]
+     (reduce (partial check* capbac now options) {:acc ""
+                                                  :root? true
+                                                  :capabilities []}
+             (partition 2 2 nil parts)))))
+
+(defn reverse-diap [vec from to]
+  (mapv #(nth vec (dec %)) (range to from -1)))
+
+(defn reverse-diap [vec from to]
+  (mapv #(nth vec %)
+        (concat (range 0 from)
+                (range to (dec from) -1)
+                (range (inc to) (count vec)))))
+
+(defn swap-diap*
+  [v i j]
+  (let [a (min i j)
+        b (max i j)]
+    (loop [c a
+           r (transient v)]
+      (if (> c b)
+        (persistent! r)
+        (recur (inc c) (assoc! r c (v (+ a (- b c)))))))))
+
+(comment
+  (range 4 (dec 2) -1)
+  (def v (vec (shuffle (range 100))))
+  #_(def v [1 2 3 4 5 6])
+  (use 'criterium.core)
+
+  (with-progress-reporting
+    (quick-bench (reverse-diap v 20 40) :verbose))
+
+  (with-progress-reporting
+    (swap-diap* v 20 40))
+  
+  
+  )
 
 (comment
   (forge "ololo" {:domain "foo"})

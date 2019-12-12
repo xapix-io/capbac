@@ -23,7 +23,7 @@
         (is (thrown-with-msg? Exception #":capbac.core/invalid"
                               (capbac/check blacksmith 0 (subs root-token 0 (dec (count root-token))))))))
 
-    (let [token1 (capbac/wrap root-token {:path "/foo"} "api1" "secret1")]
+    (let [token1 (capbac/restrict root-token {:path "/foo"} "api1" "secret1")]
       (is (= [{:domain "myorg.com"}
               {:path "/foo"}]
              (capbac/check blacksmith 0 token1)))
@@ -32,12 +32,18 @@
         (is (thrown-with-msg? Exception #":capbac.core/bad-sign"
                               (capbac/check blacksmith' 0 token1))))
 
-      (let [token2 (capbac/wrap token1 {:path "/foo/bar"} "api1" "secret1"
-                                {:expire-at 100})]
+      (let [token2 (capbac/restrict token1 {:path "/foo/bar"} "api1" "secret1"
+                                    {:expire-at 100})]
         (is (= [{:domain "myorg.com"}
                 {:path "/foo"}
                 {:path "/foo/bar"}]
                (capbac/check blacksmith 0 token2)))
 
         (is (thrown-with-msg? Exception #":capbac.core/expired"
-                              (capbac/check blacksmith 120 token2)))))))
+                              (capbac/check blacksmith 120 token2)))))
+    (testing "locking"
+      (let [locked-token (capbac/lock root-token "my-key")]
+        (is (thrown-with-msg? Exception #":capbac.core/bad-sign"
+                              (capbac/check blacksmith 0 locked-token)))
+        (is (= [{:domain "myorg.com"}]
+               (capbac/check blacksmith 0 locked-token {:lock-keys ["my-key"]})))))))

@@ -38,7 +38,6 @@ sign = HMAC-SHA256(capability, secret)
 
 * restrict : token -> sub-capability -> expire-at? -> cap-key -> secret -> token
 * lock : token -> key -> token
-* unlock : token -> key -> token
 
 Optional:
 * capability : token -> capability+
@@ -49,7 +48,7 @@ Optional:
 * blacksmith : root-key -> (cap-key -> secret)
 * forge : blacksmith -> capability -> expire-at? -> token
 * inherit : blacksmith -> token -> capability -> expire-at? -> token
-* check : blacksmith -> now -> token -> invalid | bad-sign | expired | capability+
+* check : blacksmith -> now -> lock-keys? -> token  -> invalid | bad-sign | expired | capability+
 
 
 ## Representation
