@@ -1,55 +1,95 @@
 # CapBAC
 
-## Vocabulary
-* Token
-* Root Token
-* Wrap Token
-* Capability
-* Capability Part
-* ExpireAt
-* CapKeyToken
-* Blacksmith
-
-HMAC-SHA256
-
-## Token structure
-
-Token consists of:
-
-* Set of Capabilitites
-* Validity period
-
-token = headers capability sign
-root-token = capability sign
-wrap-token = headers capability cap-key sign
-
-sign = BYTE-ARRAY
-cap-key = BYTE-ARRAY
-
-cA2.cA1.2.c.t1.s1.w.s2
-
-["api/keys", "asdasd", "delete"]
-
-sign = HMAC-SHA256(capability, secret)
-
 ## Operations
 
-### Client
+Protocol Operations are defined via ocaml-like interface definition syntax
 
-* restrict : token -> sub-capability -> expire-at? -> cap-key -> secret -> token
-* lock : token -> key -> token
+```
+caveat : Exp int
+
+keypair : (pk, sk)
+holder : id -> keypair -> holder
+resolver : id -> pk
+trust-checker : id -> boolean
+
+forge : holder -> resolver -> subject -> capability -> caveat -> certificate
+delegate : holder -> resolver -> subject -> certificate -> capability -> caveat -> certificate
+invoke : holder -> certificates+ -> caveat -> action -> invocation
+
+check : resolver -> trust-checker -> invocation -> now -> invalid | bad-sign | expired | (capability+, action)
+```
 
 Optional:
-* capability : token -> capability+
-* expire-at : token -> expire-at?
 
-### Service
+```
+extract : invocation -> (capability+, action)
+extract-certificate : certificate -> capability+
+check-certificate : certificate -> invalid | bad-sign | expired
+```
 
-* blacksmith : root-key -> (cap-key -> secret)
-* forge : blacksmith -> capability -> expire-at? -> token
-* inherit : blacksmith -> token -> capability -> expire-at? -> token
-* check : blacksmith -> now -> lock-keys? -> token  -> invalid | bad-sign | expired | capability+
+## Structure
+
+```
+
+headers = issuer subject exp?
+
+certificate = certificate? headers capability signature 
+invocation = certificate+ exp? action signature
+```
+
+Headers are encoded as Protofuf v3 Message + Base64url
+
+Capabilities and action are opaque to protocol, so they just byte arrays encoded by Base64url
+
+## Signing
+
+Certificate 
+
+```
+signature = sign(payload.subject-pk, issuer-sk)
+```
+
+Invocation
+
+```
+signature = sign(payload, issuer-sk)
+```
 
 
-## Representation
+## Verification
+
+### Subject resolving
+
+
+
+### Certificate chain
+
+Verifier
+
+1. Checks that root-issuers are trusted
+2. Resolves subjects in certificates to subject-pks
+3. Checks every certificate in chain by `(verify(payload))`
+
+
+### Invocation
+
+Verifier
+
+1. Resolves subjects of certificate-chains to subject-pks
+2. Checks that all subject-pks of top-level certificates are the same
+3. Verifies invocation signature by `verify(payload, subject-pk)`
+4. Verifies signatures of every certificate
+
+
+## Notes
+
+### Why not RBAC/ABAC?
+
+### Why not other Capabilities-as-Certificate system
+
+### Why not JWT/JWS representation
+* not chain signature friendly
+* freedom in protocol evolution. For example, we would consider Signature Aggregation algorithms like BLS in the future
+
+### Why not other encoding
 

@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package capbac;
+
+option java_package = "io.xapix.capbac.proto";
+option java_outer_classname = "CapBACProto";
+
+message Headers {
+
+}
+
+message Certificate {
+  message Payload {
+    Certificate parent = 1;
+    bytes capability = 2;
+    string issuer = 3;
+    string subject = 4;
+    uint64 expiration = 5;
+  }
+  bytes payload = 1;
+  bytes signature = 2;
+}
+
+message Invocation {
+  message Payload {
+    repeated Certificate certificates = 1;
+    uint64 expiration = 2;
+    bytes action = 3;
+  }
+  bytes payload = 1;
+  bytes signature = 2;
+}
