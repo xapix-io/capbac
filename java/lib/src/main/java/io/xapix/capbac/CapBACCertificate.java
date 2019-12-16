@@ -4,8 +4,10 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Iterator;
+import java.util.stream.StreamSupport;
 
-public class CapBACCertificate {
+public class CapBACCertificate implements Iterable<CapBACCertificate> {
     public static class Raw {
         CapBACProto.Certificate proto;
 
@@ -107,11 +109,28 @@ public class CapBACCertificate {
         return parent;
     }
 
+    @Override
+    public Iterator<CapBACCertificate> iterator() {
+        return new Iterator<CapBACCertificate>() {
+            private CapBACCertificate next = CapBACCertificate.this;
+            @Override
+            public boolean hasNext() {
+                if (next != null) {
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public CapBACCertificate next() {
+                CapBACCertificate prev = next;
+                next = prev.getParent();
+                return next;
+            }
+        };
+    }
+
     public CapBACCertificate getRoot() {
-        if (parent != null) {
-            return parent.getRoot();
-        } else {
-            return this;
-        }
+        return StreamSupport.stream(this.spliterator(), false).reduce((first, second) -> second).get();
     }
 }

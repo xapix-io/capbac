@@ -104,17 +104,24 @@ public class CapBACInvocation {
         return certificates;
     }
 
-    public void validate(CapBACResolver resolver, CapBACTrustChecker trustChecker) throws CapBAC.Invalid, CapBAC.BadID, CapBAC.BadSign, CapBAC.Malformed {
+    public void validate(CapBAC capbac, CapBACTrustChecker trustChecker, long now) throws CapBAC.Invalid, CapBAC.BadID, CapBAC.BadSign, CapBAC.Malformed, CapBAC.Expired {
         if(certificates.size() == 0) {
             throw new CapBAC.Invalid("Invocation should contain at least one certificate");
         }
-        List<CapBACCertificate> parsedCertificates = new ArrayList<>(certificates.size());
         List<byte[]> resolvedSubjects = new ArrayList<>();
 
         for (CapBACCertificate.Raw rawCert : certificates) {
             CapBACCertificate parsed = rawCert.parse();
-            parsedCertificates.add(parsed);
-            byte[] resolve = resolver.resolve(parsed.getSubject());
+
+            for (CapBACCertificate cert : parsed) {
+                if (cert.getExp() != 0) {
+                    if (cert.getExp() < now) {
+                        throw new CapBAC.Expired();
+                    }
+                }
+            }
+
+            byte[] resolve = capbac.resolver.resolve(parsed.getSubject());
             resolvedSubjects.add(resolve);
 
             if(!trustChecker.check(parsed.getRoot().getIssuer())) {
@@ -131,18 +138,18 @@ public class CapBACInvocation {
         }
 
         for (CapBACCertificate.Raw rawCert : certificates) {
-            if(!verify(rawCert.proto.getPayload().toByteArray(), subject, rawCert.proto.getSignature().toByteArray())) {
+            if(!verify(capbac, rawCert.proto.getPayload().toByteArray(), subject, rawCert.proto.getSignature().toByteArray())) {
                 throw new CapBAC.BadSign();
             }
         }
     }
 
-    private boolean verify(byte[] data, byte[] pk, byte[] signature) throws CapBAC.BadID, CapBAC.BadSign {
+    private boolean verify(CapBAC capbac, byte[] data, byte[] pk, byte[] signature) throws CapBAC.BadID, CapBAC.BadSign {
         final Signature s;
         try {
-            s = Signature.getInstance(CapBAC.ALG);
+            s = Signature.getInstance(capbac.ALG);
 
-            s.initVerify(CapBAC.bytesToPK(pk));
+            s.initVerify(capbac.bytesToPK(pk));
             s.update(data);
             return s.verify(signature);
         } catch (NoSuchAlgorithmException e) {

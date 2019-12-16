@@ -14,9 +14,9 @@ trust-checker : id -> boolean
 
 forge : holder -> resolver -> subject -> capability -> caveat -> certificate
 delegate : holder -> resolver -> subject -> certificate -> capability -> caveat -> certificate
-invoke : holder -> certificates+ -> caveat -> action -> invocation
+invoke : holder -> certificates+ -> caveat -> action -> malformed | bad-id | invocation
 
-check : resolver -> trust-checker -> invocation -> now -> invalid | bad-sign | expired | (capability+, action)
+check : resolver -> trust-checker -> invocation -> now -> malformed | bad-id | invalid | bad-sign | expired | (capability+, action)
 ```
 
 ## Structure

@@ -9,7 +9,13 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
 class CapBAC {
-    static String ALG = "SHA256withECDSA";
+    String ALG = "SHA256withECDSA";
+    CapBACResolver resolver;
+
+    public CapBAC(CapBACResolver resolver) {
+        this.resolver = resolver;
+    }
+
     static class SignatureError extends RuntimeException{
         SignatureError(Throwable cause) {
             super(cause);
@@ -66,9 +72,9 @@ class CapBAC {
         }
     }
 
-    static ECPublicKey bytesToPK(byte[] keyBytes) throws CapBAC.BadID {
+    ECPublicKey bytesToPK(byte[] keyBytes) throws CapBAC.BadID {
         try {
-            KeyFactory kf = KeyFactory.getInstance(CapBAC.ALG);
+            KeyFactory kf = KeyFactory.getInstance(ALG);
             EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
             return (ECPublicKey) kf.generatePublic(keySpec);
         } catch (InvalidKeySpecException e) {

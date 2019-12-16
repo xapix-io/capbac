@@ -4,19 +4,15 @@ import com.google.protobuf.ByteString;
 
 import java.net.URL;
 import java.security.*;
-import java.security.interfaces.ECPublicKey;
-import java.security.spec.EncodedKeySpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 
 public class CapBACHolder {
     private URL me;
     private CapBACKeypair keypair;
-    private CapBACResolver resolver;
+    private CapBAC capbac;
 
-    public CapBACHolder(URL me, CapBACKeypair keypair, CapBACResolver resolver) {
+    public CapBACHolder(URL me, CapBACKeypair keypair, CapBAC capbac) {
         this.me = me;
-        this.resolver = resolver;
+        this.capbac = capbac;
         this.keypair = keypair;
     }
 
@@ -75,7 +71,7 @@ public class CapBACHolder {
 
     private byte[] makeSignature(byte[] bytes) throws CapBAC.BadID {
         try {
-            Signature signature = Signature.getInstance(CapBAC.ALG);
+            Signature signature = Signature.getInstance(capbac.ALG);
             signature.initSign(keypair.getSk());
             signature.update(bytes);
             return signature.sign();
@@ -90,9 +86,9 @@ public class CapBACHolder {
 
     private byte[] makeSignature(URL subject, byte[] bytes) throws CapBAC.BadID {
         try {
-            Signature signature = Signature.getInstance(CapBAC.ALG);
+            Signature signature = Signature.getInstance(capbac.ALG);
             signature.initSign(keypair.getSk());
-            signature.update(resolver.resolve(subject));
+            signature.update(capbac.resolver.resolve(subject));
             signature.update(bytes);
             return signature.sign();
         } catch (InvalidKeyException e) {
