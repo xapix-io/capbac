@@ -1,25 +1,42 @@
 package io.xapix.capbac;
 
-import io.xapix.capbac.impl.CaveatImpl;
-import io.xapix.capbac.impl.HolderImpl;
-import io.xapix.capbac.impl.KeypairImpl;
-
 import java.net.URL;
-import java.security.interfaces.ECPrivateKey;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 
-public class CapBAC {
+class CapBAC {
+    static String ALG = "SHA256withECDSA";
+    static class SignatureError extends RuntimeException{
+        SignatureError(Throwable cause) {
+            super(cause);
+        }
+    }
+
     public static class Error extends Throwable {
         Error() {
         }
 
-        Error(String reason) {
-            super(reason);
+        Error(Throwable cause) {
+            super(cause);
+        }
+
+        Error(String msg) {
+            super(msg);
         }
     }
+    public static class Malformed extends Error {
+        public Malformed(Throwable cause) {
+            super(cause);
+        }
+    }
+
     public static class Invalid extends Error {
-        public Invalid(String reason) {
-            super(reason);
+        public Invalid(String msg) {
+            super(msg);
         }
     }
 
@@ -27,19 +44,37 @@ public class CapBAC {
 
     }
 
+    public static class BadID extends Error {
+        public BadID(Throwable cause) {
+            super(cause);
+        }
+    }
+
     public static class BadSign extends Error {
+        public BadSign() {
+            super();
+        }
 
+        public BadSign(Throwable cause) {
+            super(cause);
+        }
     }
 
-    public static CapBACKeypair keypair(ECPublicKey pk, ECPrivateKey sk) {
-        return new KeypairImpl(pk, sk);
+    static void runtimeCheck(boolean res, String message) {
+        if (!res) {
+            throw new RuntimeException(message);
+        }
     }
 
-    public static CapBACHolder holder(URL me, CapBACKeypair keypair) {
-        return new HolderImpl(me, keypair);
-    }
-
-    public static CapBACCaveatBuilder caveat() {
-        return new CaveatImpl.Builder();
+    static ECPublicKey bytesToPK(byte[] keyBytes) throws CapBAC.BadID {
+        try {
+            KeyFactory kf = KeyFactory.getInstance(CapBAC.ALG);
+            EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+            return (ECPublicKey) kf.generatePublic(keySpec);
+        } catch (InvalidKeySpecException e) {
+            throw new CapBAC.BadID(e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new CapBAC.SignatureError(e);
+        }
     }
 }

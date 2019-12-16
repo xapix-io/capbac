@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package capbac;
 
-option java_package = "io.xapix.capbac.proto";
+option java_package = "io.xapix.capbac";
 option java_outer_classname = "CapBACProto";
 
 message Headers {

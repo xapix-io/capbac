@@ -19,14 +19,6 @@ invoke : holder -> certificates+ -> caveat -> action -> invocation
 check : resolver -> trust-checker -> invocation -> now -> invalid | bad-sign | expired | (capability+, action)
 ```
 
-Optional:
-
-```
-extract : invocation -> (capability+, action)
-extract-certificate : certificate -> capability+
-check-certificate : certificate -> invalid | bad-sign | expired
-```
-
 ## Structure
 
 ```
