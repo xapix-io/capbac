@@ -9,7 +9,7 @@ import java.util.stream.StreamSupport;
 
 public class CapBACCertificate implements Iterable<CapBACCertificate> {
     public static class Raw {
-        CapBACProto.Certificate proto;
+        public CapBACProto.Certificate proto;
 
         public Raw(byte[] data) throws CapBAC.Malformed {
             try {

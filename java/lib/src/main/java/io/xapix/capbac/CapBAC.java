@@ -8,7 +8,7 @@ import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
-class CapBAC {
+public class CapBAC {
     String ALG = "SHA256withECDSA";
     CapBACResolver resolver;
 
@@ -16,8 +16,8 @@ class CapBAC {
         this.resolver = resolver;
     }
 
-    static class SignatureError extends RuntimeException{
-        SignatureError(Throwable cause) {
+    public static class SignatureError extends RuntimeException{
+        public SignatureError(Throwable cause) {
             super(cause);
         }
     }
@@ -53,6 +53,10 @@ class CapBAC {
     public static class BadID extends Error {
         public BadID(Throwable cause) {
             super(cause);
+        }
+
+        public BadID() {
+            super();
         }
     }
 

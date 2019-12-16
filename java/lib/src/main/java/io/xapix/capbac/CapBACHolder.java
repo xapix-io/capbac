@@ -10,7 +10,7 @@ public class CapBACHolder {
     private CapBACKeypair keypair;
     private CapBAC capbac;
 
-    public CapBACHolder(URL me, CapBACKeypair keypair, CapBAC capbac) {
+    public CapBACHolder(URL me, CapBAC capbac, CapBACKeypair keypair) {
         this.me = me;
         this.capbac = capbac;
         this.keypair = keypair;
