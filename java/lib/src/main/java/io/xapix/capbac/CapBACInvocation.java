@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class CapBACInvocation {
     public static class Raw {
-        CapBACProto.Invocation proto;
+        public CapBACProto.Invocation proto;
 
         public Raw(byte[] data) throws CapBAC.Malformed {
             try {
@@ -42,17 +42,25 @@ public class CapBACInvocation {
                 throw new CapBAC.Malformed(e);
             }
 
-            List<CapBACCertificate.Raw> certificates = new ArrayList<CapBACCertificate.Raw>();
+            List<ProofedCert> certificates = new ArrayList<>();
 
-            for (CapBACProto.Certificate proto : payload.getCertificatesList()) {
-                certificates.add(new CapBACCertificate.Raw(proto));
+            for (CapBACProto.Invocation.ProofedCertificate proto : payload.getCertificatesList()) {
+                certificates.add(
+                        new ProofedCert(proto,
+                        proto.getSignature().toByteArray()));
             }
 
-            return new CapBACInvocation(
-                    payload.getAction().toByteArray(),
-                    payload.getExpiration(),
-                    certificates,
-                    proto.getSignature().toByteArray());
+            try {
+                return new CapBACInvocation(
+                        this,
+                        payload.getAction().toByteArray(),
+                        new URL(payload.getInvoker()),
+                        payload.getExpiration(),
+                        certificates,
+                        proto.getSignature().toByteArray());
+            } catch (MalformedURLException e) {
+                throw new CapBAC.Malformed(e);
+            }
         }
     }
 
@@ -75,14 +83,30 @@ public class CapBACInvocation {
         }
     }
 
+    static class ProofedCert {
+        private final CapBACProto.Invocation.ProofedCertificate proto;
+        CapBACCertificate.Raw raw;
+        byte[] signature;
+
+        public ProofedCert(CapBACProto.Invocation.ProofedCertificate proto, byte[] signature) throws CapBAC.Malformed {
+            this.proto = proto;
+            this.raw = new CapBACCertificate.Raw(proto.getPayload().toByteArray());
+            this.signature = signature;
+        }
+    }
+
     private byte[] action;
     private byte[] signature;
     private long exp;
-    private List<CapBACCertificate.Raw> certificates;
+    private List<ProofedCert> certificates;
+    private final Raw raw;
+    private final URL invoker;
 
-    CapBACInvocation(byte[] action, long exp, List<CapBACCertificate.Raw> certificates, byte[] signature) {
+    private CapBACInvocation(Raw raw, byte[] action, URL invoker, long exp, List<ProofedCert> certificates, byte[] signature) {
+        this.raw = raw;
         this.action = action;
         this.signature = signature;
+        this.invoker = invoker;
 
         this.exp = exp;
         this.certificates = certificates;
@@ -100,62 +124,34 @@ public class CapBACInvocation {
         return exp;
     }
 
+    public Raw getRaw() {
+        return raw;
+    }
+
+    public URL getInvoker() {
+        return invoker;
+    }
+
     public List<CapBACCertificate.Raw> getCertificates() {
-        return certificates;
+        return certificates.stream().map(x -> x.raw).collect(Collectors.toList());
     }
 
     public void validate(CapBAC capbac, CapBACTrustChecker trustChecker, long now) throws CapBAC.Invalid, CapBAC.BadID, CapBAC.BadSign, CapBAC.Malformed, CapBAC.Expired {
         if(certificates.size() == 0) {
             throw new CapBAC.Invalid("Invocation should contain at least one certificate");
         }
-        List<byte[]> resolvedSubjects = new ArrayList<>();
 
-        for (CapBACCertificate.Raw rawCert : certificates) {
-            CapBACCertificate parsed = rawCert.parse();
-
-            for (CapBACCertificate cert : parsed) {
-                if (cert.getExp() != 0) {
-                    if (cert.getExp() < now) {
-                        throw new CapBAC.Expired();
-                    }
-                }
-            }
-
-            byte[] resolve = capbac.resolver.resolve(parsed.getSubject());
-            resolvedSubjects.add(resolve);
-
-            if(!trustChecker.check(parsed.getRoot().getIssuer())) {
-                throw new CapBAC.Invalid("Untrusted root issuer");
-            }
-        }
-
-        byte[] subject = resolvedSubjects.get(0);
-        for (ListIterator<byte[]> it = resolvedSubjects.listIterator(1); it.hasNext(); ) {
-            byte[] subj1 = it.next();
-            if (!Arrays.equals(subj1, subject)) {
-                throw new CapBAC.Invalid("Subjects of certificates are not the same");
-            }
-        }
-
-        for (CapBACCertificate.Raw rawCert : certificates) {
-            if(!verify(capbac, rawCert.proto.getPayload().toByteArray(), subject, rawCert.proto.getSignature().toByteArray())) {
+        for (ProofedCert cert : certificates) {
+            CapBACCertificate parsed = cert.raw.parse();
+            parsed.validate(capbac, trustChecker, now);
+            if(!capbac.verify(cert.proto.getPayload().toByteArray(), capbac.resolver.resolve(parsed.getSubject()), cert.proto.getSignature().toByteArray())) {
                 throw new CapBAC.BadSign();
             }
         }
-    }
 
-    private boolean verify(CapBAC capbac, byte[] data, byte[] pk, byte[] signature) throws CapBAC.BadID, CapBAC.BadSign {
-        final Signature s;
-        try {
-            s = Signature.getInstance(capbac.ALG);
-
-            s.initVerify(capbac.bytesToPK(pk));
-            s.update(data);
-            return s.verify(signature);
-        } catch (NoSuchAlgorithmException e) {
-            throw new CapBAC.SignatureError(e);
-        } catch (SignatureException | InvalidKeyException e) {
-            throw new CapBAC.BadSign(e);
+        if(!capbac.verify(raw.proto.getPayload().toByteArray(), capbac.resolver.resolve(invoker), raw.proto.getSignature().toByteArray())) {
+            throw new CapBAC.BadSign();
         }
+
     }
 }

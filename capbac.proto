@@ -22,11 +22,18 @@ message Certificate {
 }
 
 message Invocation {
-  message Payload {
-    repeated Certificate certificates = 1;
-    uint64 expiration = 2;
-    bytes action = 3;
+  message ProofedCertificate {
+    bytes payload = 1;
+    bytes signature = 2;
   }
+
+  message Payload {
+    repeated ProofedCertificate certificates = 1;
+    string invoker = 2;
+    bytes action = 3;
+    uint64 expiration = 4;
+  }
+
   bytes payload = 1;
   bytes signature = 2;
 }

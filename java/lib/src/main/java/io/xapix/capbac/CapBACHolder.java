@@ -4,16 +4,17 @@ import com.google.protobuf.ByteString;
 
 import java.net.URL;
 import java.security.*;
+import java.security.interfaces.ECPrivateKey;
 
 public class CapBACHolder {
     private URL me;
-    private CapBACKeypair keypair;
     private CapBAC capbac;
+    private CapBACKeypairs keypairs;
 
-    public CapBACHolder(URL me, CapBAC capbac, CapBACKeypair keypair) {
+    public CapBACHolder(URL me, CapBAC capbac, CapBACKeypairs keypairs) {
         this.me = me;
         this.capbac = capbac;
-        this.keypair = keypair;
+        this.keypairs = keypairs;
     }
 
     public CapBACCertificate.Raw forge(CapBACCertificate.Builder builder) throws CapBAC.BadID {
@@ -41,12 +42,17 @@ public class CapBACHolder {
         return new CapBACCertificate.Raw(certBuilder.build());
     }
 
-    public CapBACInvocation.Raw invoke(CapBACInvocation.Builder builder) throws CapBAC.BadID {
+    public CapBACInvocation.Raw invoke(CapBACInvocation.Builder builder) throws CapBAC.BadID, CapBAC.Malformed {
         CapBACProto.Invocation.Payload.Builder payloadBuilder = CapBACProto.Invocation.Payload.newBuilder();
+        payloadBuilder.setInvoker(me.toString());
         payloadBuilder.setAction(ByteString.copyFrom(builder.action));
         payloadBuilder.setExpiration(builder.exp);
         for (CapBACCertificate.Raw cert : builder.certificates) {
-            payloadBuilder.addCertificates(cert.proto);
+            CapBACProto.Invocation.ProofedCertificate.Builder certBuilder = CapBACProto.Invocation.ProofedCertificate.newBuilder();
+            ByteString certBytes = cert.proto.toByteString();
+            certBuilder.setPayload(certBytes);
+            certBuilder.setSignature(ByteString.copyFrom(makeSignature(cert.parse().getSubject(), certBytes.toByteArray())));
+            payloadBuilder.addCertificates(certBuilder);
         }
 
         CapBACProto.Invocation.Payload payload = payloadBuilder.build();
@@ -69,17 +75,13 @@ public class CapBACHolder {
         return payloadBuilder;
     }
 
-    private byte[] makeSignature(byte[] bytes) throws CapBAC.BadID {
+    private byte[] makeSignature(byte[] bytes) {
         try {
             Signature signature = Signature.getInstance(capbac.ALG);
-            signature.initSign(keypair.getSk());
+            signature.initSign(keypairs.get(me));
             signature.update(bytes);
             return signature.sign();
-        } catch (InvalidKeyException e) {
-            throw new CapBAC.SignatureError(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new CapBAC.SignatureError(e);
-        } catch (SignatureException e) {
+        } catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException | CapBAC.BadID e) {
             throw new CapBAC.SignatureError(e);
         }
     }
@@ -87,15 +89,11 @@ public class CapBACHolder {
     private byte[] makeSignature(URL subject, byte[] bytes) throws CapBAC.BadID {
         try {
             Signature signature = Signature.getInstance(capbac.ALG);
-            signature.initSign(keypair.getSk());
+            signature.initSign(keypairs.get(me));
             signature.update(capbac.resolver.resolve(subject));
             signature.update(bytes);
             return signature.sign();
-        } catch (InvalidKeyException e) {
-            throw new CapBAC.SignatureError(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new CapBAC.SignatureError(e);
-        } catch (SignatureException e) {
+        } catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException e) {
             throw new CapBAC.SignatureError(e);
         }
     }

@@ -7,14 +7,14 @@ Protocol Operations are defined via ocaml-like interface definition syntax
 ```
 caveat : Exp int
 
-keypair : (pk, sk)
-holder : id -> keypair -> holder
+keypairs : id -> sk
+holder : id -> keypairs -> holder
 resolver : id -> pk
 trust-checker : id -> boolean
 
-forge : holder -> resolver -> subject -> capability -> caveat -> certificate
-delegate : holder -> resolver -> subject -> certificate -> capability -> caveat -> certificate
-invoke : holder -> certificates+ -> caveat -> action -> malformed | bad-id | invocation
+forge : holder -> resolver -> subject -> capability -> caveat* -> certificate
+delegate : holder -> resolver -> subject -> certificate -> capability -> caveat* -> certificate
+invoke : holder -> certificate -> caveat* -> action -> malformed | bad-id | invocation
 
 check : resolver -> trust-checker -> invocation -> now -> malformed | bad-id | invalid | bad-sign | expired | (capability+, action)
 ```
