@@ -9,12 +9,10 @@ import java.security.interfaces.ECPrivateKey;
 public class CapBACHolder {
     private URL me;
     private CapBAC capbac;
-    private CapBACKeypairs keypairs;
 
-    public CapBACHolder(URL me, CapBAC capbac, CapBACKeypairs keypairs) {
+    public CapBACHolder(URL me, CapBAC capbac) {
         this.me = me;
         this.capbac = capbac;
-        this.keypairs = keypairs;
     }
 
     public CapBACCertificate.Raw forge(CapBACCertificate.Builder builder) throws CapBAC.BadID {
@@ -74,11 +72,10 @@ public class CapBACHolder {
         payloadBuilder.setIssuer(me.toString());
         return payloadBuilder;
     }
-
     private byte[] makeSignature(byte[] bytes) {
         try {
             Signature signature = Signature.getInstance(capbac.ALG);
-            signature.initSign(keypairs.get(me));
+            signature.initSign(capbac.keypairs.get(me));
             signature.update(bytes);
             return signature.sign();
         } catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException | CapBAC.BadID e) {
@@ -89,8 +86,8 @@ public class CapBACHolder {
     private byte[] makeSignature(URL subject, byte[] bytes) throws CapBAC.BadID {
         try {
             Signature signature = Signature.getInstance(capbac.ALG);
-            signature.initSign(keypairs.get(me));
-            signature.update(capbac.resolver.resolve(subject));
+            signature.initSign(capbac.keypairs.get(me));
+            signature.update(capbac.resolver.resolve(subject).getEncoded());
             signature.update(bytes);
             return signature.sign();
         } catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException e) {

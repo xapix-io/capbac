@@ -15,12 +15,20 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemReader;
 
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -28,6 +36,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import static org.apache.commons.io.FileUtils.readFileToByteArray;
+import static org.apache.commons.io.FileUtils.readFileToString;
 
 public class CapBACCli {
 
@@ -65,19 +74,43 @@ public class CapBACCli {
                 try {
                     String[] parts = value.split("=");
 
-                    return new IDMaping(new URL(parts[0]), readFileToByteArray(new File(parts[1])));
-                } catch (IOException e) {
+                    return new IDMaping(new URL(parts[0]), readFileToString(new File(parts[1]), StandardCharsets.UTF_8));
+                } catch (IOException | CapBAC.BadID e) {
                     throw new RuntimeException(e);
                 }
             }
         }
 
-        final URL id;
-        final byte[] pk;
+        private static byte[] parsePEM(Reader pem) throws IOException {
+            PemReader reader = new PemReader(pem);
+            PemObject pemObject = reader.readPemObject();
+            byte[] content = pemObject.getContent();
+            reader.close();
+            return content;
+        }
 
-        public IDMaping(URL id, byte[] pk) {
+        ECPublicKey bytesToPK(byte[] keyBytes) throws CapBAC.BadID {
+            try {
+                KeyFactory kf = KeyFactory.getInstance("EC");
+                EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+                return (ECPublicKey) kf.generatePublic(keySpec);
+            } catch (InvalidKeySpecException e) {
+                throw new CapBAC.BadID(e);
+            } catch (NoSuchAlgorithmException e) {
+                throw new CapBAC.SignatureError(e);
+            }
+        }
+
+        final URL id;
+        final ECPublicKey pk;
+
+        public IDMaping(URL id, String pemFile) throws CapBAC.BadID {
             this.id = id;
-            this.pk = pk;
+            try {
+                this.pk = bytesToPK(parsePEM(new StringReader(pemFile)));
+            } catch (IOException e) {
+                throw new CapBAC.BadID(e);
+            }
         }
     }
 
@@ -130,9 +163,9 @@ public class CapBACCli {
                 .addCommand("delegate", new Object[] { holderArgs, resolverArgs , certArgs })
                 .addCommand("invoke", new Object[] { holderArgs, resolverArgs , invokeArgs })
                 .addCommand("certificate", new Object())
-                .addCommand("certificate-validate", new Object[] { validateArgs })
+                .addCommand("certificate-validate", new Object[] { validateArgs, resolverArgs })
                 .addCommand("invocation", new Object())
-                .addCommand("invocation-validate", new Object[] { validateArgs })
+                .addCommand("invocation-validate", new Object[] { validateArgs, resolverArgs })
                 .build();
         jc.parse(argv);
 
@@ -175,6 +208,7 @@ public class CapBACCli {
             System.exit(11);
         } catch (CapBAC.BadID badID) {
             System.err.println("Bad ID");
+            badID.getCause().printStackTrace();
             System.exit(12);
         } catch (CapBAC.Invalid invalid) {
             System.err.println("Invalid data");
@@ -238,26 +272,28 @@ public class CapBACCli {
     }
 
     private CapBAC makeCapBAC() {
-        HashMap<URL, byte[]> idMap = new HashMap<>();
-        for (IDMaping id : resolverArgs.ids) {
-            idMap.put(id.id, id.pk);
-        }
-        StaticMapResolver resolver = new StaticMapResolver(idMap);
-        return new CapBAC(resolver);
-    }
-
-    private CapBACHolder makeHolder() {
         try {
-            byte[] sk = readFileToByteArray(holderArgs.sk);
-            CapBAC capBAC = makeCapBAC();
+            HashMap<URL, ECPublicKey> idMap = new HashMap<>();
+            for (IDMaping id : resolverArgs.ids) {
+                idMap.put(id.id, id.pk);
+            }
+            StaticMapResolver resolver = new StaticMapResolver(idMap);
+
             HashMap<URL, ECPrivateKey> keypairsMap = new HashMap<>();
-            keypairsMap.put(holderArgs.me, bytesToSK(sk));
+            if (holderArgs.sk != null) {
+                byte[] sk = readFileToByteArray(holderArgs.sk);
+                keypairsMap.put(holderArgs.me, bytesToSK(sk));
+            }
 
-            return new CapBACHolder(holderArgs.me, capBAC, new StaticMapKeypairs(keypairsMap));
-
+            return new CapBAC(resolver, new StaticMapKeypairs(keypairsMap));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private CapBACHolder makeHolder() {
+        CapBAC capBAC = makeCapBAC();
+        return new CapBACHolder(holderArgs.me, capBAC);
     }
 
     public static void main(String[] argv) {
@@ -321,7 +357,6 @@ public class CapBACCli {
         PEMKeyPair pemKeyPair = null;
         try {
             pemKeyPair = (PEMKeyPair)pemParser.readObject();
-
 
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
             KeyPair keyPair = converter.getKeyPair(pemKeyPair);

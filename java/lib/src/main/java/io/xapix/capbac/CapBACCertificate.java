@@ -2,6 +2,8 @@ package io.xapix.capbac;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
@@ -153,9 +155,16 @@ public class CapBACCertificate implements Iterable<CapBACCertificate> {
         if(!trustChecker.check(this.getRoot().getIssuer())) {
             throw new CapBAC.Invalid("Untrusted root issuer");
         }
-
-        if(!capbac.verify(raw.proto.getPayload().toByteArray(), capbac.resolver.resolve(issuer), raw.proto.getSignature().toByteArray())) {
-            throw new CapBAC.BadSign();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            outputStream.write( capbac.resolver.resolve(subject).getEncoded());
+            outputStream.write( raw.proto.getPayload().toByteArray());
+            if(!capbac.verify(outputStream.toByteArray(), capbac.resolver.resolve(issuer), raw.proto.getSignature().toByteArray())) {
+                throw new CapBAC.BadSign();
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

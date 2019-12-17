@@ -1,5 +1,10 @@
 package io.xapix.capbac;
 
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemReader;
+
+import java.io.IOException;
+import java.io.Reader;
 import java.net.URL;
 import java.security.*;
 import java.security.interfaces.ECPublicKey;
@@ -9,10 +14,11 @@ import java.security.spec.X509EncodedKeySpec;
 
 public class CapBAC {
     String ALG = "SHA256withECDSA";
-    String KEYS = "KEYS";
     CapBACResolver resolver;
+    CapBACKeypairs keypairs;
 
-    public CapBAC(CapBACResolver resolver) {
+    public CapBAC(CapBACResolver resolver, CapBACKeypairs keypairs) {
+        this.keypairs = keypairs;
         this.resolver = resolver;
     }
 
@@ -76,23 +82,11 @@ public class CapBAC {
         }
     }
 
-    ECPublicKey bytesToPK(byte[] keyBytes) throws CapBAC.BadID {
-        try {
-            KeyFactory kf = KeyFactory.getInstance(KEYS);
-            EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
-            return (ECPublicKey) kf.generatePublic(keySpec);
-        } catch (InvalidKeySpecException e) {
-            throw new CapBAC.BadID(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new CapBAC.SignatureError(e);
-        }
-    }
-
-    boolean verify(byte[] data, byte[] pk, byte[] signature) throws CapBAC.BadID, CapBAC.BadSign {
+    boolean verify(byte[] data, ECPublicKey pk, byte[] signature) throws CapBAC.BadID, CapBAC.BadSign {
         final Signature s;
         try {
             s = Signature.getInstance(ALG);
-            s.initVerify(bytesToPK(pk));
+            s.initVerify(pk);
             s.update(data);
             return s.verify(signature);
         } catch (NoSuchAlgorithmException e) {
