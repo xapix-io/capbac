@@ -4,5 +4,5 @@ import java.net.URL;
 import java.security.interfaces.ECPublicKey;
 
 public interface CapBACResolver {
-    ECPublicKey resolve(URL id) throws CapBAC.BadID;
+    byte[] resolve(URL id) throws CapBAC.BadID;
 }

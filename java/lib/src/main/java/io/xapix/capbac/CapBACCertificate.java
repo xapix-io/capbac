@@ -6,6 +6,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Iterator;
 import java.util.stream.StreamSupport;
 
@@ -157,7 +163,7 @@ public class CapBACCertificate implements Iterable<CapBACCertificate> {
         }
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
-            outputStream.write( capbac.resolver.resolve(subject).getEncoded());
+            outputStream.write( capbac.resolver.resolve(subject));
             outputStream.write( raw.proto.getPayload().toByteArray());
             if(!capbac.verify(outputStream.toByteArray(), capbac.resolver.resolve(issuer), raw.proto.getSignature().toByteArray())) {
                 throw new CapBAC.BadSign();

@@ -87,7 +87,7 @@ public class CapBACHolder {
         try {
             Signature signature = Signature.getInstance(capbac.ALG);
             signature.initSign(capbac.keypairs.get(me));
-            signature.update(capbac.resolver.resolve(subject).getEncoded());
+            signature.update(capbac.resolver.resolve(subject));
             signature.update(bytes);
             return signature.sign();
         } catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException e) {

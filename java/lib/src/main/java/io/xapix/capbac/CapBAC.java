@@ -8,6 +8,7 @@ import java.io.Reader;
 import java.net.URL;
 import java.security.*;
 import java.security.interfaces.ECPublicKey;
+import java.security.spec.ECPoint;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
@@ -82,17 +83,29 @@ public class CapBAC {
         }
     }
 
-    boolean verify(byte[] data, ECPublicKey pk, byte[] signature) throws CapBAC.BadID, CapBAC.BadSign {
+    boolean verify(byte[] data, byte[] pk, byte[] signature) throws CapBAC.BadID, CapBAC.BadSign {
         final Signature s;
         try {
             s = Signature.getInstance(ALG);
-            s.initVerify(pk);
+            s.initVerify(bytesToPK(pk));
             s.update(data);
             return s.verify(signature);
         } catch (NoSuchAlgorithmException e) {
             throw new CapBAC.SignatureError(e);
         } catch (SignatureException | InvalidKeyException e) {
             throw new CapBAC.BadSign(e);
+        }
+    }
+
+    ECPublicKey bytesToPK(byte[] keyBytes) throws CapBAC.BadID {
+        try {
+            KeyFactory kf = KeyFactory.getInstance("EC");
+            EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+            return (ECPublicKey) kf.generatePublic(keySpec);
+        } catch (InvalidKeySpecException e) {
+            throw new CapBAC.BadID(e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new CapBAC.SignatureError(e);
         }
     }
 }

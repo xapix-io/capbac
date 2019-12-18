@@ -1,0 +1,15 @@
+[package]
+name = "capbac-cli"
+version = "0.1.0"
+authors = ["prepor <ceo@prepor.ru>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+capbac = { path = "../lib" }
+structopt = "0.3"
+ring = "0.16.9"
+url = "2.1.0"
+protobuf = "2.8.1"
+pem = "0.7.0"

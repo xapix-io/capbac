@@ -28,6 +28,7 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Date;
@@ -74,7 +75,7 @@ public class CapBACCli {
                 try {
                     String[] parts = value.split("=");
 
-                    return new IDMaping(new URL(parts[0]), readFileToString(new File(parts[1]), StandardCharsets.UTF_8));
+                    return new IDMaping(new URL(parts[0]), readFileToByteArray(new File(parts[1])));
                 } catch (IOException | CapBAC.BadID e) {
                     throw new RuntimeException(e);
                 }
@@ -89,28 +90,12 @@ public class CapBACCli {
             return content;
         }
 
-        ECPublicKey bytesToPK(byte[] keyBytes) throws CapBAC.BadID {
-            try {
-                KeyFactory kf = KeyFactory.getInstance("EC");
-                EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
-                return (ECPublicKey) kf.generatePublic(keySpec);
-            } catch (InvalidKeySpecException e) {
-                throw new CapBAC.BadID(e);
-            } catch (NoSuchAlgorithmException e) {
-                throw new CapBAC.SignatureError(e);
-            }
-        }
-
         final URL id;
-        final ECPublicKey pk;
+        final byte[] pk;
 
-        public IDMaping(URL id, String pemFile) throws CapBAC.BadID {
+        public IDMaping(URL id, byte[] pemFile) throws CapBAC.BadID {
             this.id = id;
-            try {
-                this.pk = bytesToPK(parsePEM(new StringReader(pemFile)));
-            } catch (IOException e) {
-                throw new CapBAC.BadID(e);
-            }
+            this.pk = pemFile;
         }
     }
 
@@ -273,7 +258,7 @@ public class CapBACCli {
 
     private CapBAC makeCapBAC() {
         try {
-            HashMap<URL, ECPublicKey> idMap = new HashMap<>();
+            HashMap<URL, byte[]> idMap = new HashMap<>();
             for (IDMaping id : resolverArgs.ids) {
                 idMap.put(id.id, id.pk);
             }
@@ -353,17 +338,16 @@ public class CapBACCli {
 
 
     private static ECPrivateKey bytesToSK(byte[] keyBytes) {
-        PEMParser pemParser = new PEMParser(new InputStreamReader(new ByteArrayInputStream(keyBytes)));
-        PEMKeyPair pemKeyPair = null;
+        KeyFactory kf = null;
         try {
-            pemKeyPair = (PEMKeyPair)pemParser.readObject();
-
-            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-            KeyPair keyPair = converter.getKeyPair(pemKeyPair);
-            pemParser.close();
-
-            return (ECPrivateKey)keyPair.getPrivate();
-        } catch (IOException e) {
+            kf = KeyFactory.getInstance("EC");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
+        try {
+            return (ECPrivateKey) kf.generatePrivate(keySpec);
+        } catch (InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
     }
