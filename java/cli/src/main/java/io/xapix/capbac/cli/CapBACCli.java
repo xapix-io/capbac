@@ -7,8 +7,6 @@ import com.beust.jcommander.converters.FileConverter;
 import com.beust.jcommander.converters.URLConverter;
 import com.google.protobuf.util.JsonFormat;
 import io.xapix.capbac.*;
-import io.xapix.capbac.keypairs.StaticMapKeypairs;
-import io.xapix.capbac.pubs.StaticMapPubs;
 import io.xapix.capbac.trust.PatternChecker;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -21,17 +19,14 @@ import org.bouncycastle.util.io.pem.PemReader;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -58,16 +53,35 @@ public class CapBACCli {
         }
     }
 
-    static class HolderArgs implements CapBACKeypairs {
-        @Parameter(names = "--me", description = "ID of holder", required = true, converter = URLConverter.class)
-        URL me;
+    abstract static class IDMapping<T> {
+        final URL id;
+        final T val;
+        public IDMapping(String val) {
+            try {
+                String[] parts = val.split("=");
+                this.id = new URL(parts[0]);
+                this.val = parse(readFileToByteArray(new File(parts[1])));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        abstract T parse(byte[] content);
+    }
 
-        @Parameter(names = "--sk", description = "Private key path", required = true, converter = FileConverter.class)
-        File sk;
+    static class SKMapping extends IDMapping<ECPrivateKey>  {
+        SKMapping(String val) {
+            super(val);
+        }
 
-
-        private static ECPrivateKey bytesToSK(byte[] keyBytes) {
-            PEMParser pemParser = new PEMParser(new InputStreamReader(new ByteArrayInputStream(keyBytes)));
+        static class Converter implements IStringConverter<SKMapping> {
+            @Override
+            public SKMapping convert(String value) {
+                return new SKMapping(value);
+            }
+        }
+        @Override
+        public ECPrivateKey parse(byte[] content) {
+            PEMParser pemParser = new PEMParser(new InputStreamReader(new ByteArrayInputStream(content)));
             PEMKeyPair pemKeyPair = null;
             try {
                 pemKeyPair = (PEMKeyPair)pemParser.readObject();
@@ -82,36 +96,21 @@ public class CapBACCli {
                 throw new RuntimeException(e);
             }
         }
-
-        @Override
-        public ECPrivateKey get(URL id) {
-            if (me.equals(id)) {
-                try {
-                    return bytesToSK(readFileToByteArray(sk));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            return null;
-        }
     }
 
-    static class IDMaping {
+    static class PKMapping extends IDMapping<ECPublicKey>  {
+        PKMapping(String val) {
+            super(val);
+        }
 
-        static class Converter implements IStringConverter<IDMaping> {
+        static class Converter implements IStringConverter<PKMapping> {
             @Override
-            public IDMaping convert(String value) {
-                try {
-                    String[] parts = value.split("=");
-
-                    return new IDMaping(new URL(parts[0]), readFileToString(new File(parts[1]), StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+            public PKMapping convert(String value) {
+                return new PKMapping(value);
             }
         }
 
-        private static byte[] parsePEM(Reader pem) throws IOException {
+        private byte[] parsePEM(Reader pem) throws IOException {
             PemReader reader = new PemReader(pem);
             PemObject pemObject = reader.readPemObject();
             byte[] content = pemObject.getContent();
@@ -119,38 +118,45 @@ public class CapBACCli {
             return content;
         }
 
-        ECPublicKey bytesToPK(byte[] keyBytes) {
+        @Override
+        public ECPublicKey parse(byte[] content) {
             try {
                 KeyFactory kf = KeyFactory.getInstance("EC");
-                EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+                EncodedKeySpec keySpec = new X509EncodedKeySpec(content);
                 return (ECPublicKey) kf.generatePublic(keySpec);
             } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
         }
+    }
 
-        final URL id;
-        final ECPublicKey pk;
 
-        public IDMaping(URL id, String content) {
-            this.id = id;
-            try {
-                this.pk = bytesToPK(parsePEM(new StringReader(content)));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+    static class HolderArgs implements CapBACKeypairs {
+        @Parameter(names = "--me", description = "ID of holder", required = true, converter = URLConverter.class)
+        URL me;
+        @Parameter(names = "--sk", description = "ID to private key map", converter = SKMapping.Converter.class)
+        List<SKMapping> ids = new ArrayList<>();
+
+        @Override
+        public ECPrivateKey get(URL id) {
+            for (SKMapping mapping : ids) {
+                if (mapping.id.equals(id)) {
+                    return mapping.val;
+                }
             }
+            return null;
         }
     }
 
     static class PubsArgs implements CapBACPubs {
-        @Parameter(names = "--id", description = "ID to public key map", converter = IDMaping.Converter.class)
-        List<IDMaping> ids = new ArrayList<>();
+        @Parameter(names = "--pub", description = "ID to public key map", converter = PKMapping.Converter.class)
+        List<PKMapping> ids = new ArrayList<>();
 
         @Override
         public ECPublicKey get(URL id) {
-            for (IDMaping mapping : ids) {
+            for (PKMapping mapping : ids) {
                 if (mapping.id.equals(id)) {
-                    return mapping.pk;
+                    return mapping.val;
                 }
             }
             return null;

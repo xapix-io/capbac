@@ -1,0 +1,12 @@
+[package]
+name = "capbac-tests"
+version = "0.1.0"
+authors = ["prepor <ceo@prepor.ru>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ansi_term = "0.12.1"
+duct = "0.13.3"
+url = "2.1.0"
