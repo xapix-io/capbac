@@ -9,14 +9,20 @@ caveat : Exp int
 
 keypairs : id -> sk
 holder : id -> keypairs -> holder
-resolver : id -> pk
 trust-checker : id -> boolean
 
-forge : holder -> resolver -> subject -> capability -> caveat* -> certificate
-delegate : holder -> resolver -> subject -> certificate -> capability -> caveat* -> certificate
+forge : holder -> subject -> capability -> caveat list -> certificate
+delegate : holder -> subject -> certificate -> capability -> caveat list -> certificate
 invoke : holder -> certificate -> caveat* -> action -> malformed | bad-id | invocation
 
-check : resolver -> trust-checker -> invocation -> now -> malformed | bad-id | invalid | bad-sign | expired | (capability+, action)
+ids : invocation -> id list
+pubkeys : id -> pk
+action : invocation -> action
+capabilities : invocation -> (root-id, capability list)
+
+validator : trust-checker -> validator
+
+validate : validator -> pubkeys -> invocation -> now -> ok | malformed | bad-id | invalid | bad-sign | expired
 ```
 
 ## Structure

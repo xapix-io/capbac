@@ -5,10 +5,6 @@ package capbac;
 option java_package = "io.xapix.capbac";
 option java_outer_classname = "CapBACProto";
 
-message Headers {
-
-}
-
 message Certificate {
   message Payload {
     Certificate parent = 1;

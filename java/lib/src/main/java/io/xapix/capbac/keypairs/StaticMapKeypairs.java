@@ -6,8 +6,6 @@ import java.net.URL;
 import java.security.interfaces.ECPrivateKey;
 import java.util.Map;
 
-import io.xapix.capbac.CapBAC;
-
 public class StaticMapKeypairs implements CapBACKeypairs {
     private Map<URL, ECPrivateKey> map;
 
@@ -16,10 +14,7 @@ public class StaticMapKeypairs implements CapBACKeypairs {
     }
 
     @Override
-    public ECPrivateKey get(URL id) throws CapBAC.BadID {
-        if (!map.containsKey(id)) {
-            throw new CapBAC.BadID();
-        }
+    public ECPrivateKey get(URL id) {
         return map.get(id);
     }
 }

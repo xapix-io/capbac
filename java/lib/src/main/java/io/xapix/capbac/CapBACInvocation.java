@@ -1,5 +1,6 @@
 package io.xapix.capbac;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.net.MalformedURLException;
@@ -15,64 +16,18 @@ import java.util.ListIterator;
 import java.util.stream.Collectors;
 
 public class CapBACInvocation {
-    public static class Raw {
-        public CapBACProto.Invocation proto;
-
-        public Raw(byte[] data) throws CapBAC.Malformed {
-            try {
-                this.proto = CapBACProto.Invocation.parseFrom(data);
-            } catch (InvalidProtocolBufferException e) {
-                throw new CapBAC.Malformed(e);
-            }
-        }
-
-        Raw(CapBACProto.Invocation proto) {
-            this.proto = proto;
-        }
-
-        public byte[] encode() {
-            return proto.toByteArray();
-        }
-
-        public CapBACInvocation parse() throws CapBAC.Malformed {
-            CapBACProto.Invocation.Payload payload;
-            try {
-                payload = CapBACProto.Invocation.Payload.parseFrom(proto.getPayload());
-            } catch (InvalidProtocolBufferException e) {
-                throw new CapBAC.Malformed(e);
-            }
-
-            List<ProofedCert> certificates = new ArrayList<>();
-
-            for (CapBACProto.Invocation.ProofedCertificate proto : payload.getCertificatesList()) {
-                certificates.add(
-                        new ProofedCert(proto,
-                        proto.getSignature().toByteArray()));
-            }
-
-            try {
-                return new CapBACInvocation(
-                        this,
-                        payload.getAction().toByteArray(),
-                        new URL(payload.getInvoker()),
-                        payload.getExpiration(),
-                        certificates,
-                        proto.getSignature().toByteArray());
-            } catch (MalformedURLException e) {
-                throw new CapBAC.Malformed(e);
-            }
-        }
-    }
+    CapBACProto.Invocation proto;
+    CapBACProto.Invocation.Payload payload;
 
     public static class Builder {
-        List<CapBACCertificate.Raw> certificates = new ArrayList<CapBACCertificate.Raw>();
+        List<CapBACCertificate> certificates = new ArrayList<>();
         byte[] action;
         long exp = 0;
         public Builder( byte[] action) {
             this.action = action;
         }
 
-        public Builder addCert(CapBACCertificate.Raw cert) {
+        public Builder addCert(CapBACCertificate cert) {
             certificates.add(cert);
             return this;
         }
@@ -84,74 +39,94 @@ public class CapBACInvocation {
     }
 
     static class ProofedCert {
-        private final CapBACProto.Invocation.ProofedCertificate proto;
-        CapBACCertificate.Raw raw;
-        byte[] signature;
+        final CapBACProto.Invocation.ProofedCertificate proto;
+        CapBACCertificate cert;
 
-        public ProofedCert(CapBACProto.Invocation.ProofedCertificate proto, byte[] signature) throws CapBAC.Malformed {
+        ProofedCert(CapBACProto.Invocation.ProofedCertificate proto) throws CapBAC.Malformed {
             this.proto = proto;
-            this.raw = new CapBACCertificate.Raw(proto.getPayload().toByteArray());
-            this.signature = signature;
+            this.cert = new CapBACCertificate(proto.getPayload().toByteArray());
+        }
+
+        public ProofedCert(CapBACProto.Invocation.ProofedCertificate proto, CapBACCertificate cert) {
+            this.proto = proto;
+            this.cert = cert;
         }
     }
 
-    private byte[] action;
-    private byte[] signature;
-    private long exp;
-    private List<ProofedCert> certificates;
-    private final Raw raw;
-    private final URL invoker;
+    private List<ProofedCert> certificates = new ArrayList<>();
 
-    private CapBACInvocation(Raw raw, byte[] action, URL invoker, long exp, List<ProofedCert> certificates, byte[] signature) {
-        this.raw = raw;
-        this.action = action;
-        this.signature = signature;
-        this.invoker = invoker;
+    public CapBACInvocation(byte[] data) throws CapBAC.Malformed {
+        try {
+            this.proto = CapBACProto.Invocation.parseFrom(data);
+            this.payload = CapBACProto.Invocation.Payload.parseFrom(proto.getPayload());
+            for (CapBACProto.Invocation.ProofedCertificate pCert : payload.getCertificatesList()) {
+                certificates.add(new ProofedCert(pCert));
+            }
+        } catch (InvalidProtocolBufferException e) {
+            throw new CapBAC.Malformed(e);
+        }
+    }
 
-        this.exp = exp;
-        this.certificates = certificates;
+    CapBACInvocation(Builder builder, CapBACHolder signer) {
+        CapBACProto.Invocation.Payload.Builder payloadBuilder = CapBACProto.Invocation.Payload.newBuilder();
+        payloadBuilder.setInvoker(signer.me.toString());
+        payloadBuilder.setAction(ByteString.copyFrom(builder.action));
+        payloadBuilder.setExpiration(builder.exp);
+        for (CapBACCertificate cert : builder.certificates) {
+            CapBACProto.Invocation.ProofedCertificate.Builder certBuilder = CapBACProto.Invocation.ProofedCertificate.newBuilder();
+            ByteString certBytes = cert.proto.toByteString();
+            certBuilder.setPayload(certBytes);
+            certBuilder.setSignature(ByteString.copyFrom(signer.sign(cert.getSubject(), certBytes.toByteArray())));
+            CapBACProto.Invocation.ProofedCertificate proofedCert = certBuilder.build();
+            payloadBuilder.addCertificates(proofedCert);
+            this.certificates.add(new ProofedCert(proofedCert, cert));
+        }
+
+        CapBACProto.Invocation.Payload payload = payloadBuilder.build();
+        ByteString payloadBytes = payload.toByteString();
+
+        CapBAC.runtimeCheck(builder.certificates.size() > 0, "Invocation should include at least one certificate");
+
+        CapBACProto.Invocation.Builder protoBuilder = CapBACProto.Invocation.newBuilder();
+        protoBuilder.setPayload(payloadBytes);
+        protoBuilder.setSignature(ByteString.copyFrom(signer.sign(payloadBytes.toByteArray())));
+        this.proto = protoBuilder.build();
+        this.payload = payload;
     }
 
     public byte[] getAction() {
-        return action;
+        return payload.getAction().toByteArray();
     }
 
     public byte[] getSignature() {
-        return signature;
+        return proto.getSignature().toByteArray();
     }
 
     public long getExp() {
-        return exp;
-    }
-
-    public Raw getRaw() {
-        return raw;
+        return payload.getExpiration();
     }
 
     public URL getInvoker() {
-        return invoker;
+        try {
+            return new URL(payload.getInvoker());
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public List<CapBACCertificate.Raw> getCertificates() {
-        return certificates.stream().map(x -> x.raw).collect(Collectors.toList());
+    public List<CapBACCertificate> getCertificates() {
+        return certificates.stream().map(x -> x.cert).collect(Collectors.toList());
     }
 
-    public void validate(CapBAC capbac, CapBACTrustChecker trustChecker, long now) throws CapBAC.Invalid, CapBAC.BadID, CapBAC.BadSign, CapBAC.Malformed, CapBAC.Expired {
-        if(certificates.size() == 0) {
-            throw new CapBAC.Invalid("Invocation should contain at least one certificate");
-        }
+    public List<ProofedCert> getProofs() {
+        return certificates;
+    }
 
-        for (ProofedCert cert : certificates) {
-            CapBACCertificate parsed = cert.raw.parse();
-            parsed.validate(capbac, trustChecker, now);
-            if(!capbac.verify(cert.proto.getPayload().toByteArray(), capbac.resolver.resolve(parsed.getSubject()), cert.proto.getSignature().toByteArray())) {
-                throw new CapBAC.BadSign();
-            }
-        }
+    public byte[] encode() {
+        return proto.toByteArray();
+    }
 
-        if(!capbac.verify(raw.proto.getPayload().toByteArray(), capbac.resolver.resolve(invoker), raw.proto.getSignature().toByteArray())) {
-            throw new CapBAC.BadSign();
-        }
-
+    public CapBACProto.Invocation getProto() {
+        return proto;
     }
 }

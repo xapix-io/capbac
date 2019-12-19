@@ -1,5 +1,6 @@
 package io.xapix.capbac;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.io.ByteArrayOutputStream;
@@ -16,50 +17,14 @@ import java.util.Iterator;
 import java.util.stream.StreamSupport;
 
 public class CapBACCertificate implements Iterable<CapBACCertificate> {
-    public static class Raw {
-        public CapBACProto.Certificate proto;
-
-        public Raw(byte[] data) throws CapBAC.Malformed {
-            try {
-                this.proto = CapBACProto.Certificate.parseFrom(data);
-            } catch (InvalidProtocolBufferException e) {
-                throw new CapBAC.Malformed(e);
-            }
-        }
-
-        Raw(CapBACProto.Certificate proto) {
-            this.proto = proto;
-        }
-
-        public byte[] encode() {
-            return proto.toByteArray();
-        }
-
-        public CapBACCertificate parse() throws CapBAC.Malformed {
-            CapBACProto.Certificate.Payload payload;
-            try {
-                payload = CapBACProto.Certificate.Payload.parseFrom(proto.getPayload());
-            } catch (InvalidProtocolBufferException e) {
-                throw new CapBAC.Malformed(e);
-            }
-
-            CapBACCertificate parent = null;
-            if (!payload.getParent().getPayload().isEmpty()) {
-                parent = new Raw(payload.getParent()).parse();
-            }
-
-            try {
-                return new CapBACCertificate(
-                        payload.getCapability().toByteArray(),
-                        new URL(payload.getIssuer()),
-                        new URL(payload.getSubject()),
-                        payload.getExpiration(),
-                        parent,
-                        proto.getSignature().toByteArray(),
-                        this);
-            } catch (MalformedURLException e) {
-                throw new CapBAC.Malformed(e);
-            }
+    CapBACProto.Certificate proto;
+    CapBACProto.Certificate.Payload payload;
+    public CapBACCertificate(byte[] data) throws CapBAC.Malformed {
+        try {
+            this.proto = CapBACProto.Certificate.parseFrom(data);
+            this.payload = CapBACProto.Certificate.Payload.parseFrom(proto.getPayload());
+        } catch (InvalidProtocolBufferException e) {
+            throw new CapBAC.Malformed(e);
         }
     }
 
@@ -78,50 +43,73 @@ public class CapBACCertificate implements Iterable<CapBACCertificate> {
         }
     }
 
-    private byte[] capability;
-    private byte[] signature;
-    private URL issuer;
-    private URL subject;
-    private long exp;
-    private CapBACCertificate parent;
-    private CapBACCertificate.Raw raw;
+    public CapBACCertificate(CapBACProto.Certificate proto) {
+        this.proto = proto;
+        try {
+            this.payload = CapBACProto.Certificate.Payload.parseFrom(proto.getPayload());
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-    CapBACCertificate(byte[] capability, URL issuer, URL subject, long exp, CapBACCertificate parent, byte[] signature, CapBACCertificate.Raw raw) {
-        this.capability = capability;
-        this.signature = signature;
-        this.issuer = issuer;
-        this.subject = subject;
-        this.exp = exp;
-        this.parent = parent;
-        this.raw = raw;
+    CapBACCertificate(Builder builder, CapBACHolder signer) {
+        this(null, builder, signer);
+    }
+
+    CapBACCertificate(CapBACCertificate parent, Builder builder, CapBACHolder signer) {
+        CapBACProto.Certificate.Payload.Builder payloadBuilder = CapBACProto.Certificate.Payload.newBuilder();
+        payloadBuilder.setCapability(ByteString.copyFrom(builder.capability));
+        payloadBuilder.setExpiration(builder.exp);
+        payloadBuilder.setSubject(builder.subject.toString());
+        payloadBuilder.setIssuer(signer.me.toString());
+        if (parent != null) {
+            payloadBuilder.setParent(parent.proto);
+        }
+
+        CapBACProto.Certificate.Payload payload = payloadBuilder.build();
+        ByteString payloadBytes = payload.toByteString();
+
+        CapBACProto.Certificate.Builder protoBuilder = CapBACProto.Certificate.newBuilder();
+        protoBuilder.setPayload(payloadBytes);
+        protoBuilder.setSignature(ByteString.copyFrom(signer.sign(payloadBytes.toByteArray())));
+        this.proto = protoBuilder.build();
+        this.payload = payload;
     }
 
     public byte[] getCapability() {
-        return capability;
+        return payload.getCapability().toByteArray();
     }
 
     public byte[] getSignature() {
-        return signature;
+        return proto.getSignature().toByteArray();
     }
 
     public URL getIssuer() {
-        return issuer;
+        try {
+            return new URL(payload.getIssuer());
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public URL getSubject() {
-        return subject;
+        try {
+            return new URL(payload.getSubject());
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public long getExp() {
-        return exp;
+        return payload.getExpiration();
     }
 
     public CapBACCertificate getParent() {
-        return parent;
-    }
-
-    public Raw getRaw() {
-        return raw;
+        if (!payload.getParent().getPayload().isEmpty()) {
+            return new CapBACCertificate(payload.getParent());
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -149,28 +137,11 @@ public class CapBACCertificate implements Iterable<CapBACCertificate> {
         return StreamSupport.stream(this.spliterator(), false).reduce((first, second) -> second).get();
     }
 
-    public void validate(CapBAC capbac, CapBACTrustChecker trustChecker, long now) throws CapBAC.Expired, CapBAC.Invalid, CapBAC.BadID, CapBAC.BadSign {
+    public byte[] encode() {
+        return proto.toByteArray();
+    }
 
-        for (CapBACCertificate cert : this) {
-            if (cert.getExp() != 0) {
-                if (cert.getExp() < now) {
-                    throw new CapBAC.Expired();
-                }
-            }
-        }
-        if(!trustChecker.check(this.getRoot().getIssuer())) {
-            throw new CapBAC.Invalid("Untrusted root issuer");
-        }
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try {
-            outputStream.write( capbac.resolver.resolve(subject));
-            outputStream.write( raw.proto.getPayload().toByteArray());
-            if(!capbac.verify(outputStream.toByteArray(), capbac.resolver.resolve(issuer), raw.proto.getSignature().toByteArray())) {
-                throw new CapBAC.BadSign();
-            }
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+    public CapBACProto.Certificate getProto() {
+        return proto;
     }
 }

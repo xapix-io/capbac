@@ -1,30 +1,17 @@
 package io.xapix.capbac;
 
-import org.bouncycastle.util.io.pem.PemObject;
-import org.bouncycastle.util.io.pem.PemReader;
-
-import java.io.IOException;
-import java.io.Reader;
 import java.net.URL;
-import java.security.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.interfaces.ECPublicKey;
-import java.security.spec.ECPoint;
-import java.security.spec.EncodedKeySpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 
 public class CapBAC {
-    String ALG = "SHA256withECDSA";
-    CapBACResolver resolver;
-    CapBACKeypairs keypairs;
-
-    public CapBAC(CapBACResolver resolver, CapBACKeypairs keypairs) {
-        this.keypairs = keypairs;
-        this.resolver = resolver;
-    }
+    static String ALG = "SHA256withECDSA";
 
     public static class SignatureError extends RuntimeException{
-        public SignatureError(Throwable cause) {
+        SignatureError(Throwable cause) {
             super(cause);
         }
     }
@@ -42,13 +29,13 @@ public class CapBAC {
         }
     }
     public static class Malformed extends Error {
-        public Malformed(Throwable cause) {
+        Malformed(Throwable cause) {
             super(cause);
         }
     }
 
     public static class Invalid extends Error {
-        public Invalid(String msg) {
+        Invalid(String msg) {
             super(msg);
         }
     }
@@ -58,54 +45,36 @@ public class CapBAC {
     }
 
     public static class BadID extends Error {
-        public BadID(Throwable cause) {
+        BadID(Throwable cause) {
             super(cause);
         }
 
-        public BadID() {
+        BadID() {
             super();
+        }
+
+        BadID(String msg) {
+            super(msg);
         }
     }
 
     public static class BadSign extends Error {
-        public BadSign() {
+        BadSign() {
             super();
         }
 
-        public BadSign(Throwable cause) {
+        BadSign(Throwable cause) {
             super(cause);
+        }
+
+        BadSign(String msg) {
+            super(msg);
         }
     }
 
     static void runtimeCheck(boolean res, String message) {
         if (!res) {
             throw new RuntimeException(message);
-        }
-    }
-
-    boolean verify(byte[] data, byte[] pk, byte[] signature) throws CapBAC.BadID, CapBAC.BadSign {
-        final Signature s;
-        try {
-            s = Signature.getInstance(ALG);
-            s.initVerify(bytesToPK(pk));
-            s.update(data);
-            return s.verify(signature);
-        } catch (NoSuchAlgorithmException e) {
-            throw new CapBAC.SignatureError(e);
-        } catch (SignatureException | InvalidKeyException e) {
-            throw new CapBAC.BadSign(e);
-        }
-    }
-
-    ECPublicKey bytesToPK(byte[] keyBytes) throws CapBAC.BadID {
-        try {
-            KeyFactory kf = KeyFactory.getInstance("EC");
-            EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
-            return (ECPublicKey) kf.generatePublic(keySpec);
-        } catch (InvalidKeySpecException e) {
-            throw new CapBAC.BadID(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new CapBAC.SignatureError(e);
         }
     }
 }

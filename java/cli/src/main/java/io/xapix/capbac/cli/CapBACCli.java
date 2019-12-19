@@ -8,7 +8,7 @@ import com.beust.jcommander.converters.URLConverter;
 import com.google.protobuf.util.JsonFormat;
 import io.xapix.capbac.*;
 import io.xapix.capbac.keypairs.StaticMapKeypairs;
-import io.xapix.capbac.resolvers.StaticMapResolver;
+import io.xapix.capbac.pubs.StaticMapPubs;
 import io.xapix.capbac.trust.PatternChecker;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -21,7 +21,6 @@ import org.bouncycastle.util.io.pem.PemReader;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.interfaces.ECPrivateKey;
@@ -59,12 +58,42 @@ public class CapBACCli {
         }
     }
 
-    static class HolderArgs {
+    static class HolderArgs implements CapBACKeypairs {
         @Parameter(names = "--me", description = "ID of holder", required = true, converter = URLConverter.class)
         URL me;
 
         @Parameter(names = "--sk", description = "Private key path", required = true, converter = FileConverter.class)
         File sk;
+
+
+        private static ECPrivateKey bytesToSK(byte[] keyBytes) {
+            PEMParser pemParser = new PEMParser(new InputStreamReader(new ByteArrayInputStream(keyBytes)));
+            PEMKeyPair pemKeyPair = null;
+            try {
+                pemKeyPair = (PEMKeyPair)pemParser.readObject();
+
+
+                JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+                KeyPair keyPair = converter.getKeyPair(pemKeyPair);
+                pemParser.close();
+
+                return (ECPrivateKey) keyPair.getPrivate();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public ECPrivateKey get(URL id) {
+            if (me.equals(id)) {
+                try {
+                    return bytesToSK(readFileToByteArray(sk));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return null;
+        }
     }
 
     static class IDMaping {
@@ -75,8 +104,8 @@ public class CapBACCli {
                 try {
                     String[] parts = value.split("=");
 
-                    return new IDMaping(new URL(parts[0]), readFileToByteArray(new File(parts[1])));
-                } catch (IOException | CapBAC.BadID e) {
+                    return new IDMaping(new URL(parts[0]), readFileToString(new File(parts[1]), StandardCharsets.UTF_8));
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -90,18 +119,42 @@ public class CapBACCli {
             return content;
         }
 
-        final URL id;
-        final byte[] pk;
+        ECPublicKey bytesToPK(byte[] keyBytes) {
+            try {
+                KeyFactory kf = KeyFactory.getInstance("EC");
+                EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+                return (ECPublicKey) kf.generatePublic(keySpec);
+            } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
-        public IDMaping(URL id, byte[] pemFile) throws CapBAC.BadID {
+        final URL id;
+        final ECPublicKey pk;
+
+        public IDMaping(URL id, String content) {
             this.id = id;
-            this.pk = pemFile;
+            try {
+                this.pk = bytesToPK(parsePEM(new StringReader(content)));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
-    static class ResolverArgs {
+    static class PubsArgs implements CapBACPubs {
         @Parameter(names = "--id", description = "ID to public key map", converter = IDMaping.Converter.class)
         List<IDMaping> ids = new ArrayList<>();
+
+        @Override
+        public ECPublicKey get(URL id) {
+            for (IDMaping mapping : ids) {
+                if (mapping.id.equals(id)) {
+                    return mapping.pk;
+                }
+            }
+            return null;
+        }
     }
 
     static class CertificateArgs {
@@ -136,7 +189,7 @@ public class CapBACCli {
 
     private ValidateArgs validateArgs = new ValidateArgs();
     private HolderArgs holderArgs = new HolderArgs();
-    private ResolverArgs resolverArgs = new ResolverArgs();
+    private PubsArgs pubs = new PubsArgs();
     private CertificateArgs certArgs = new CertificateArgs();
     private InvokeArgs invokeArgs = new InvokeArgs();
 
@@ -144,13 +197,13 @@ public class CapBACCli {
         Security.addProvider(new BouncyCastleProvider());
 
         JCommander jc = JCommander.newBuilder()
-                .addCommand("forge", new Object[] { holderArgs, resolverArgs , certArgs })
-                .addCommand("delegate", new Object[] { holderArgs, resolverArgs , certArgs })
-                .addCommand("invoke", new Object[] { holderArgs, resolverArgs , invokeArgs })
+                .addCommand("forge", new Object[] { holderArgs, certArgs })
+                .addCommand("delegate", new Object[] { holderArgs, certArgs })
+                .addCommand("invoke", new Object[] { holderArgs, invokeArgs })
                 .addCommand("certificate", new Object())
-                .addCommand("certificate-validate", new Object[] { validateArgs, resolverArgs })
+                .addCommand("certificate-validate", new Object[] { validateArgs, pubs })
                 .addCommand("invocation", new Object())
-                .addCommand("invocation-validate", new Object[] { validateArgs, resolverArgs })
+                .addCommand("invocation-validate", new Object[] { validateArgs, pubs })
                 .build();
         jc.parse(argv);
 
@@ -175,14 +228,14 @@ public class CapBACCli {
                     break;
                 case "certificate-validate":
                     CapBACCertificate cert = printCertificate();
-                    cert.validate(makeCapBAC(), new PatternChecker(validateArgs.trustRegex), validateArgs.now);
+                    new CapBACValidator(new PatternChecker(validateArgs.trustRegex), pubs).validate(cert, validateArgs.now);
                     break;
                 case "invocation":
                     printInvocation();
                     break;
                 case "invocation-validate":
                     CapBACInvocation inv = printInvocation();
-                    inv.validate(makeCapBAC(), new PatternChecker(validateArgs.trustRegex), validateArgs.now);
+                    new CapBACValidator(new PatternChecker(validateArgs.trustRegex), pubs).validate(inv, validateArgs.now);
                     break;
             }
         } catch (IOException e) {
@@ -211,29 +264,29 @@ public class CapBACCli {
         try {
             CapBACHolder holder = makeHolder();
             CapBACCertificate.Builder builder = makeCertBuilder();
-            CapBACCertificate.Raw res = holder.forge(builder);
+            CapBACCertificate res = holder.forge(builder);
             System.out.write(res.encode());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void runInvoke() throws CapBAC.BadID, CapBAC.Malformed {
+    private void runInvoke() throws CapBAC.Malformed {
         try {
             CapBACHolder holder = makeHolder();
             CapBACInvocation.Builder builder = makeInvokeBuilder();
-            CapBACInvocation.Raw res = holder.invoke(builder);
+            CapBACInvocation res = holder.invoke(builder);
             System.out.write(res.encode());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void runDelegate() throws IOException, CapBAC.BadID, CapBAC.Malformed {
+    private void runDelegate() throws IOException, CapBAC.Malformed {
         byte[] input = IOUtils.toByteArray(System.in);
         CapBACHolder holder = makeHolder();
         CapBACCertificate.Builder builder = makeCertBuilder();
-        CapBACCertificate.Raw res = holder.delegate(new CapBACCertificate.Raw(input), builder);
+        CapBACCertificate res = holder.delegate(new CapBACCertificate(input), builder);
         System.out.write(res.encode());
     }
 
@@ -248,7 +301,7 @@ public class CapBACCli {
                     .withExp(certArgs.exp);
 
             for (File cert : invokeArgs.certs) {
-                builder.addCert(new CapBACCertificate.Raw(readFileToByteArray(cert)));
+                builder.addCert(new CapBACCertificate(readFileToByteArray(cert)));
             }
             return builder;
         } catch (IOException e) {
@@ -256,29 +309,8 @@ public class CapBACCli {
         }
     }
 
-    private CapBAC makeCapBAC() {
-        try {
-            HashMap<URL, byte[]> idMap = new HashMap<>();
-            for (IDMaping id : resolverArgs.ids) {
-                idMap.put(id.id, id.pk);
-            }
-            StaticMapResolver resolver = new StaticMapResolver(idMap);
-
-            HashMap<URL, ECPrivateKey> keypairsMap = new HashMap<>();
-            if (holderArgs.sk != null) {
-                byte[] sk = readFileToByteArray(holderArgs.sk);
-                keypairsMap.put(holderArgs.me, bytesToSK(sk));
-            }
-
-            return new CapBAC(resolver, new StaticMapKeypairs(keypairsMap));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private CapBACHolder makeHolder() {
-        CapBAC capBAC = makeCapBAC();
-        return new CapBACHolder(holderArgs.me, capBAC);
+        return new CapBACHolder(holderArgs.me, holderArgs);
     }
 
     public static void main(String[] argv) {
@@ -291,20 +323,19 @@ public class CapBACCli {
         try {
             bytes = IOUtils.toByteArray(System.in);
         } catch (IOException e) {
-            throw new CapBAC.Malformed(e);
+            throw new RuntimeException(e);
         }
-        return printCertificate(new CapBACCertificate.Raw(bytes));
+        return printCertificate(new CapBACCertificate(bytes));
     }
 
-    private static CapBACCertificate printCertificate(CapBACCertificate.Raw rawCert) throws CapBAC.Malformed {
-        CapBACCertificate rootCert = rawCert.parse();
+    private static CapBACCertificate printCertificate(CapBACCertificate rootCert){
         CapBACCertificate cert = rootCert;
         try {
             while (cert != null) {
                 CapBACProto.Certificate.Payload payload = null;
-                payload = CapBACProto.Certificate.Payload.parseFrom(cert.getRaw().proto.getPayload());
+                payload = CapBACProto.Certificate.Payload.parseFrom(cert.getProto().getPayload());
 
-                System.out.println(JsonFormat.printer().print(cert.getRaw().proto));
+                System.out.println(JsonFormat.printer().print(cert.getProto()));
 
                 System.out.println(JsonFormat.printer().print(payload));
 
@@ -312,7 +343,7 @@ public class CapBACCli {
             }
         }
         catch (IOException e) {
-            throw new CapBAC.Malformed(e);
+            throw new RuntimeException(e);
         }
         return rootCert;
     }
@@ -320,35 +351,20 @@ public class CapBACCli {
     private static CapBACInvocation printInvocation() throws CapBAC.Malformed {
         try {
             byte[] bytes = IOUtils.toByteArray(System.in);
-            CapBACInvocation inv = new CapBACInvocation.Raw(bytes).parse();
-            System.out.println(JsonFormat.printer().print(inv.getRaw().proto));
+            CapBACInvocation inv = new CapBACInvocation(bytes);
+            System.out.println(JsonFormat.printer().print(inv.getProto()));
 
-            CapBACProto.Invocation.Payload payload = CapBACProto.Invocation.Payload.parseFrom(inv.getRaw().proto.getPayload());
+            CapBACProto.Invocation.Payload payload = CapBACProto.Invocation.Payload.parseFrom(inv.getProto().getPayload());
             System.out.println(JsonFormat.printer().print(payload));
-            for (CapBACCertificate.Raw cert : inv.getCertificates()) {
+            for (CapBACCertificate cert : inv.getCertificates()) {
                 printCertificate(cert);
             }
 
             return inv;
         }
         catch (IOException e) {
-            throw new CapBAC.Malformed(e);
-        }
-    }
-
-
-    private static ECPrivateKey bytesToSK(byte[] keyBytes) {
-        KeyFactory kf = null;
-        try {
-            kf = KeyFactory.getInstance("EC");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
-        try {
-            return (ECPrivateKey) kf.generatePrivate(keySpec);
-        } catch (InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
     }
+
 }
