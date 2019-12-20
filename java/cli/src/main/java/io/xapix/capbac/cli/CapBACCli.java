@@ -122,9 +122,9 @@ public class CapBACCli {
         public ECPublicKey parse(byte[] content) {
             try {
                 KeyFactory kf = KeyFactory.getInstance("EC");
-                EncodedKeySpec keySpec = new X509EncodedKeySpec(content);
+                EncodedKeySpec keySpec = new X509EncodedKeySpec(parsePEM(new StringReader(new String(content))));
                 return (ECPublicKey) kf.generatePublic(keySpec);
-            } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+            } catch (InvalidKeySpecException | NoSuchAlgorithmException | IOException e) {
                 throw new RuntimeException(e);
             }
         }
