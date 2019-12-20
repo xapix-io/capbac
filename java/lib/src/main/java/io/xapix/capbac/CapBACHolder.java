@@ -5,14 +5,15 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.security.interfaces.ECPrivateKey;
 
 public class CapBACHolder {
-    URL me;
-    private CapBACKeypairs keypairs;
+    final URL me;
+    final ECPrivateKey sk;
 
-    public CapBACHolder(URL me, CapBACKeypairs keypairs) {
+    public CapBACHolder(URL me, ECPrivateKey sk) {
         this.me = me;
-        this.keypairs = keypairs;
+        this.sk = sk;
     }
 
     public CapBACCertificate forge(CapBACCertificate.Builder builder) {
@@ -27,19 +28,15 @@ public class CapBACHolder {
         return new CapBACInvocation(builder, this);
     }
 
-    byte[] sign(URL issuer, byte[] bytes) {
+    byte[] sign(byte[] bytes) {
         try {
             Signature signature = Signature.getInstance(CapBAC.ALG);
-            signature.initSign(keypairs.get(issuer));
+            signature.initSign(sk);
             signature.update(bytes);
             return signature.sign();
         } catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException e) {
             throw new CapBAC.SignatureError(e);
         }
-    }
-
-    byte[] sign(byte[] bytes) {
-        return sign(me, bytes);
     }
 
 }

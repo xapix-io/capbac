@@ -15,21 +15,18 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.stream.Collectors;
 
-public class CapBACInvocation {
-    CapBACProto.Invocation proto;
-    CapBACProto.Invocation.Payload payload;
+public final class CapBACInvocation {
+    final CapBACProto.Invocation proto;
+    final CapBACProto.Invocation.Payload payload;
+    final CapBACCertificate certificate;
 
-    public static class Builder {
-        List<CapBACCertificate> certificates = new ArrayList<>();
-        byte[] action;
+    public final static class Builder {
+        final CapBACCertificate certificate;
+        final byte[] action;
         long exp = 0;
-        public Builder( byte[] action) {
+        public Builder(CapBACCertificate certificate,  byte[] action) {
+            this.certificate = certificate;
             this.action = action;
-        }
-
-        public Builder addCert(CapBACCertificate cert) {
-            certificates.add(cert);
-            return this;
         }
 
         public Builder withExp(long exp) {
@@ -38,30 +35,11 @@ public class CapBACInvocation {
         }
     }
 
-    static class ProofedCert {
-        final CapBACProto.Invocation.ProofedCertificate proto;
-        CapBACCertificate cert;
-
-        ProofedCert(CapBACProto.Invocation.ProofedCertificate proto) throws CapBAC.Malformed {
-            this.proto = proto;
-            this.cert = new CapBACCertificate(proto.getPayload().toByteArray());
-        }
-
-        public ProofedCert(CapBACProto.Invocation.ProofedCertificate proto, CapBACCertificate cert) {
-            this.proto = proto;
-            this.cert = cert;
-        }
-    }
-
-    private List<ProofedCert> certificates = new ArrayList<>();
-
     public CapBACInvocation(byte[] data) throws CapBAC.Malformed {
         try {
             this.proto = CapBACProto.Invocation.parseFrom(data);
             this.payload = CapBACProto.Invocation.Payload.parseFrom(proto.getPayload());
-            for (CapBACProto.Invocation.ProofedCertificate pCert : payload.getCertificatesList()) {
-                certificates.add(new ProofedCert(pCert));
-            }
+            this.certificate = new CapBACCertificate(payload.getCertificate());
         } catch (InvalidProtocolBufferException e) {
             throw new CapBAC.Malformed(e);
         }
@@ -72,26 +50,17 @@ public class CapBACInvocation {
         payloadBuilder.setInvoker(signer.me.toString());
         payloadBuilder.setAction(ByteString.copyFrom(builder.action));
         payloadBuilder.setExpiration(builder.exp);
-        for (CapBACCertificate cert : builder.certificates) {
-            CapBACProto.Invocation.ProofedCertificate.Builder certBuilder = CapBACProto.Invocation.ProofedCertificate.newBuilder();
-            ByteString certBytes = cert.proto.toByteString();
-            certBuilder.setPayload(certBytes);
-            certBuilder.setSignature(ByteString.copyFrom(signer.sign(cert.getSubject(), certBytes.toByteArray())));
-            CapBACProto.Invocation.ProofedCertificate proofedCert = certBuilder.build();
-            payloadBuilder.addCertificates(proofedCert);
-            this.certificates.add(new ProofedCert(proofedCert, cert));
-        }
+        payloadBuilder.setCertificate(builder.certificate.getProto());
 
         CapBACProto.Invocation.Payload payload = payloadBuilder.build();
         ByteString payloadBytes = payload.toByteString();
-
-        CapBAC.runtimeCheck(builder.certificates.size() > 0, "Invocation should include at least one certificate");
 
         CapBACProto.Invocation.Builder protoBuilder = CapBACProto.Invocation.newBuilder();
         protoBuilder.setPayload(payloadBytes);
         protoBuilder.setSignature(ByteString.copyFrom(signer.sign(payloadBytes.toByteArray())));
         this.proto = protoBuilder.build();
         this.payload = payload;
+        this.certificate = builder.certificate;
     }
 
     public byte[] getAction() {
@@ -114,12 +83,8 @@ public class CapBACInvocation {
         }
     }
 
-    public List<CapBACCertificate> getCertificates() {
-        return certificates.stream().map(x -> x.cert).collect(Collectors.toList());
-    }
-
-    public List<ProofedCert> getProofs() {
-        return certificates;
+    public CapBACCertificate getCertificate() {
+        return this.certificate;
     }
 
     public byte[] encode() {

@@ -14,424 +14,6 @@ public final class CapBACProto {
     registerAllExtensions(
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
-  public interface HeadersOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:capbac.Headers)
-      com.google.protobuf.MessageOrBuilder {
-  }
-  /**
-   * Protobuf type {@code capbac.Headers}
-   */
-  public  static final class Headers extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:capbac.Headers)
-      HeadersOrBuilder {
-  private static final long serialVersionUID = 0L;
-    // Use Headers.newBuilder() to construct.
-    private Headers(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private Headers() {
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new Headers();
-    }
-
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return this.unknownFields;
-    }
-    private Headers(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return io.xapix.capbac.CapBACProto.internal_static_capbac_Headers_descriptor;
-    }
-
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return io.xapix.capbac.CapBACProto.internal_static_capbac_Headers_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              io.xapix.capbac.CapBACProto.Headers.class, io.xapix.capbac.CapBACProto.Headers.Builder.class);
-    }
-
-    private byte memoizedIsInitialized = -1;
-    @java.lang.Override
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    @java.lang.Override
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      unknownFields.writeTo(output);
-    }
-
-    @java.lang.Override
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
-      return size;
-    }
-
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof io.xapix.capbac.CapBACProto.Headers)) {
-        return super.equals(obj);
-      }
-      io.xapix.capbac.CapBACProto.Headers other = (io.xapix.capbac.CapBACProto.Headers) obj;
-
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
-      hash = (29 * hash) + unknownFields.hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static io.xapix.capbac.CapBACProto.Headers parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.xapix.capbac.CapBACProto.Headers parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.xapix.capbac.CapBACProto.Headers parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.xapix.capbac.CapBACProto.Headers parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.xapix.capbac.CapBACProto.Headers parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static io.xapix.capbac.CapBACProto.Headers parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static io.xapix.capbac.CapBACProto.Headers parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static io.xapix.capbac.CapBACProto.Headers parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static io.xapix.capbac.CapBACProto.Headers parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static io.xapix.capbac.CapBACProto.Headers parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static io.xapix.capbac.CapBACProto.Headers parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static io.xapix.capbac.CapBACProto.Headers parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    @java.lang.Override
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(io.xapix.capbac.CapBACProto.Headers prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    @java.lang.Override
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code capbac.Headers}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:capbac.Headers)
-        io.xapix.capbac.CapBACProto.HeadersOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return io.xapix.capbac.CapBACProto.internal_static_capbac_Headers_descriptor;
-      }
-
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return io.xapix.capbac.CapBACProto.internal_static_capbac_Headers_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                io.xapix.capbac.CapBACProto.Headers.class, io.xapix.capbac.CapBACProto.Headers.Builder.class);
-      }
-
-      // Construct using io.xapix.capbac.CapBACProto.Headers.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
-        }
-      }
-      @java.lang.Override
-      public Builder clear() {
-        super.clear();
-        return this;
-      }
-
-      @java.lang.Override
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return io.xapix.capbac.CapBACProto.internal_static_capbac_Headers_descriptor;
-      }
-
-      @java.lang.Override
-      public io.xapix.capbac.CapBACProto.Headers getDefaultInstanceForType() {
-        return io.xapix.capbac.CapBACProto.Headers.getDefaultInstance();
-      }
-
-      @java.lang.Override
-      public io.xapix.capbac.CapBACProto.Headers build() {
-        io.xapix.capbac.CapBACProto.Headers result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      @java.lang.Override
-      public io.xapix.capbac.CapBACProto.Headers buildPartial() {
-        io.xapix.capbac.CapBACProto.Headers result = new io.xapix.capbac.CapBACProto.Headers(this);
-        onBuilt();
-        return result;
-      }
-
-      @java.lang.Override
-      public Builder clone() {
-        return super.clone();
-      }
-      @java.lang.Override
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
-      }
-      @java.lang.Override
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
-      }
-      @java.lang.Override
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
-      }
-      @java.lang.Override
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
-      }
-      @java.lang.Override
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
-      }
-      @java.lang.Override
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof io.xapix.capbac.CapBACProto.Headers) {
-          return mergeFrom((io.xapix.capbac.CapBACProto.Headers)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(io.xapix.capbac.CapBACProto.Headers other) {
-        if (other == io.xapix.capbac.CapBACProto.Headers.getDefaultInstance()) return this;
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
-        return this;
-      }
-
-      @java.lang.Override
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      @java.lang.Override
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        io.xapix.capbac.CapBACProto.Headers parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (io.xapix.capbac.CapBACProto.Headers) e.getUnfinishedMessage();
-          throw e.unwrapIOException();
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
-      }
-
-      @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:capbac.Headers)
-    }
-
-    // @@protoc_insertion_point(class_scope:capbac.Headers)
-    private static final io.xapix.capbac.CapBACProto.Headers DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new io.xapix.capbac.CapBACProto.Headers();
-    }
-
-    public static io.xapix.capbac.CapBACProto.Headers getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<Headers>
-        PARSER = new com.google.protobuf.AbstractParser<Headers>() {
-      @java.lang.Override
-      public Headers parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new Headers(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<Headers> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<Headers> getParserForType() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public io.xapix.capbac.CapBACProto.Headers getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
   public interface CertificateOrBuilder extends
       // @@protoc_insertion_point(interface_extends:capbac.Certificate)
       com.google.protobuf.MessageOrBuilder {
@@ -2154,595 +1736,24 @@ public final class CapBACProto {
               io.xapix.capbac.CapBACProto.Invocation.class, io.xapix.capbac.CapBACProto.Invocation.Builder.class);
     }
 
-    public interface ProofedCertificateOrBuilder extends
-        // @@protoc_insertion_point(interface_extends:capbac.Invocation.ProofedCertificate)
-        com.google.protobuf.MessageOrBuilder {
-
-      /**
-       * <code>bytes payload = 1;</code>
-       * @return The payload.
-       */
-      com.google.protobuf.ByteString getPayload();
-
-      /**
-       * <code>bytes signature = 2;</code>
-       * @return The signature.
-       */
-      com.google.protobuf.ByteString getSignature();
-    }
-    /**
-     * Protobuf type {@code capbac.Invocation.ProofedCertificate}
-     */
-    public  static final class ProofedCertificate extends
-        com.google.protobuf.GeneratedMessageV3 implements
-        // @@protoc_insertion_point(message_implements:capbac.Invocation.ProofedCertificate)
-        ProofedCertificateOrBuilder {
-    private static final long serialVersionUID = 0L;
-      // Use ProofedCertificate.newBuilder() to construct.
-      private ProofedCertificate(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-        super(builder);
-      }
-      private ProofedCertificate() {
-        payload_ = com.google.protobuf.ByteString.EMPTY;
-        signature_ = com.google.protobuf.ByteString.EMPTY;
-      }
-
-      @java.lang.Override
-      @SuppressWarnings({"unused"})
-      protected java.lang.Object newInstance(
-          UnusedPrivateParameter unused) {
-        return new ProofedCertificate();
-      }
-
-      @java.lang.Override
-      public final com.google.protobuf.UnknownFieldSet
-      getUnknownFields() {
-        return this.unknownFields;
-      }
-      private ProofedCertificate(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        this();
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
-        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-            com.google.protobuf.UnknownFieldSet.newBuilder();
-        try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              case 10: {
-
-                payload_ = input.readBytes();
-                break;
-              }
-              case 18: {
-
-                signature_ = input.readBytes();
-                break;
-              }
-              default: {
-                if (!parseUnknownField(
-                    input, unknownFields, extensionRegistry, tag)) {
-                  done = true;
-                }
-                break;
-              }
-            }
-          }
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(this);
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(
-              e).setUnfinishedMessage(this);
-        } finally {
-          this.unknownFields = unknownFields.build();
-          makeExtensionsImmutable();
-        }
-      }
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return io.xapix.capbac.CapBACProto.internal_static_capbac_Invocation_ProofedCertificate_descriptor;
-      }
-
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return io.xapix.capbac.CapBACProto.internal_static_capbac_Invocation_ProofedCertificate_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.class, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.Builder.class);
-      }
-
-      public static final int PAYLOAD_FIELD_NUMBER = 1;
-      private com.google.protobuf.ByteString payload_;
-      /**
-       * <code>bytes payload = 1;</code>
-       * @return The payload.
-       */
-      public com.google.protobuf.ByteString getPayload() {
-        return payload_;
-      }
-
-      public static final int SIGNATURE_FIELD_NUMBER = 2;
-      private com.google.protobuf.ByteString signature_;
-      /**
-       * <code>bytes signature = 2;</code>
-       * @return The signature.
-       */
-      public com.google.protobuf.ByteString getSignature() {
-        return signature_;
-      }
-
-      private byte memoizedIsInitialized = -1;
-      @java.lang.Override
-      public final boolean isInitialized() {
-        byte isInitialized = memoizedIsInitialized;
-        if (isInitialized == 1) return true;
-        if (isInitialized == 0) return false;
-
-        memoizedIsInitialized = 1;
-        return true;
-      }
-
-      @java.lang.Override
-      public void writeTo(com.google.protobuf.CodedOutputStream output)
-                          throws java.io.IOException {
-        if (!payload_.isEmpty()) {
-          output.writeBytes(1, payload_);
-        }
-        if (!signature_.isEmpty()) {
-          output.writeBytes(2, signature_);
-        }
-        unknownFields.writeTo(output);
-      }
-
-      @java.lang.Override
-      public int getSerializedSize() {
-        int size = memoizedSize;
-        if (size != -1) return size;
-
-        size = 0;
-        if (!payload_.isEmpty()) {
-          size += com.google.protobuf.CodedOutputStream
-            .computeBytesSize(1, payload_);
-        }
-        if (!signature_.isEmpty()) {
-          size += com.google.protobuf.CodedOutputStream
-            .computeBytesSize(2, signature_);
-        }
-        size += unknownFields.getSerializedSize();
-        memoizedSize = size;
-        return size;
-      }
-
-      @java.lang.Override
-      public boolean equals(final java.lang.Object obj) {
-        if (obj == this) {
-         return true;
-        }
-        if (!(obj instanceof io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate)) {
-          return super.equals(obj);
-        }
-        io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate other = (io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate) obj;
-
-        if (!getPayload()
-            .equals(other.getPayload())) return false;
-        if (!getSignature()
-            .equals(other.getSignature())) return false;
-        if (!unknownFields.equals(other.unknownFields)) return false;
-        return true;
-      }
-
-      @java.lang.Override
-      public int hashCode() {
-        if (memoizedHashCode != 0) {
-          return memoizedHashCode;
-        }
-        int hash = 41;
-        hash = (19 * hash) + getDescriptor().hashCode();
-        hash = (37 * hash) + PAYLOAD_FIELD_NUMBER;
-        hash = (53 * hash) + getPayload().hashCode();
-        hash = (37 * hash) + SIGNATURE_FIELD_NUMBER;
-        hash = (53 * hash) + getSignature().hashCode();
-        hash = (29 * hash) + unknownFields.hashCode();
-        memoizedHashCode = hash;
-        return hash;
-      }
-
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parseFrom(
-          java.nio.ByteBuffer data)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data);
-      }
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parseFrom(
-          java.nio.ByteBuffer data,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data, extensionRegistry);
-      }
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parseFrom(
-          com.google.protobuf.ByteString data)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data);
-      }
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parseFrom(
-          com.google.protobuf.ByteString data,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data, extensionRegistry);
-      }
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parseFrom(byte[] data)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data);
-      }
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parseFrom(
-          byte[] data,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data, extensionRegistry);
-      }
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parseFrom(java.io.InputStream input)
-          throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseWithIOException(PARSER, input);
-      }
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parseFrom(
-          java.io.InputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseWithIOException(PARSER, input, extensionRegistry);
-      }
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parseDelimitedFrom(java.io.InputStream input)
-          throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseDelimitedWithIOException(PARSER, input);
-      }
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parseDelimitedFrom(
-          java.io.InputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-      }
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parseFrom(
-          com.google.protobuf.CodedInputStream input)
-          throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseWithIOException(PARSER, input);
-      }
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parseFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseWithIOException(PARSER, input, extensionRegistry);
-      }
-
-      @java.lang.Override
-      public Builder newBuilderForType() { return newBuilder(); }
-      public static Builder newBuilder() {
-        return DEFAULT_INSTANCE.toBuilder();
-      }
-      public static Builder newBuilder(io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate prototype) {
-        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-      }
-      @java.lang.Override
-      public Builder toBuilder() {
-        return this == DEFAULT_INSTANCE
-            ? new Builder() : new Builder().mergeFrom(this);
-      }
-
-      @java.lang.Override
-      protected Builder newBuilderForType(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        Builder builder = new Builder(parent);
-        return builder;
-      }
-      /**
-       * Protobuf type {@code capbac.Invocation.ProofedCertificate}
-       */
-      public static final class Builder extends
-          com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-          // @@protoc_insertion_point(builder_implements:capbac.Invocation.ProofedCertificate)
-          io.xapix.capbac.CapBACProto.Invocation.ProofedCertificateOrBuilder {
-        public static final com.google.protobuf.Descriptors.Descriptor
-            getDescriptor() {
-          return io.xapix.capbac.CapBACProto.internal_static_capbac_Invocation_ProofedCertificate_descriptor;
-        }
-
-        @java.lang.Override
-        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-            internalGetFieldAccessorTable() {
-          return io.xapix.capbac.CapBACProto.internal_static_capbac_Invocation_ProofedCertificate_fieldAccessorTable
-              .ensureFieldAccessorsInitialized(
-                  io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.class, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.Builder.class);
-        }
-
-        // Construct using io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.newBuilder()
-        private Builder() {
-          maybeForceBuilderInitialization();
-        }
-
-        private Builder(
-            com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-          super(parent);
-          maybeForceBuilderInitialization();
-        }
-        private void maybeForceBuilderInitialization() {
-          if (com.google.protobuf.GeneratedMessageV3
-                  .alwaysUseFieldBuilders) {
-          }
-        }
-        @java.lang.Override
-        public Builder clear() {
-          super.clear();
-          payload_ = com.google.protobuf.ByteString.EMPTY;
-
-          signature_ = com.google.protobuf.ByteString.EMPTY;
-
-          return this;
-        }
-
-        @java.lang.Override
-        public com.google.protobuf.Descriptors.Descriptor
-            getDescriptorForType() {
-          return io.xapix.capbac.CapBACProto.internal_static_capbac_Invocation_ProofedCertificate_descriptor;
-        }
-
-        @java.lang.Override
-        public io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate getDefaultInstanceForType() {
-          return io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.getDefaultInstance();
-        }
-
-        @java.lang.Override
-        public io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate build() {
-          io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate result = buildPartial();
-          if (!result.isInitialized()) {
-            throw newUninitializedMessageException(result);
-          }
-          return result;
-        }
-
-        @java.lang.Override
-        public io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate buildPartial() {
-          io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate result = new io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate(this);
-          result.payload_ = payload_;
-          result.signature_ = signature_;
-          onBuilt();
-          return result;
-        }
-
-        @java.lang.Override
-        public Builder clone() {
-          return super.clone();
-        }
-        @java.lang.Override
-        public Builder setField(
-            com.google.protobuf.Descriptors.FieldDescriptor field,
-            java.lang.Object value) {
-          return super.setField(field, value);
-        }
-        @java.lang.Override
-        public Builder clearField(
-            com.google.protobuf.Descriptors.FieldDescriptor field) {
-          return super.clearField(field);
-        }
-        @java.lang.Override
-        public Builder clearOneof(
-            com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-          return super.clearOneof(oneof);
-        }
-        @java.lang.Override
-        public Builder setRepeatedField(
-            com.google.protobuf.Descriptors.FieldDescriptor field,
-            int index, java.lang.Object value) {
-          return super.setRepeatedField(field, index, value);
-        }
-        @java.lang.Override
-        public Builder addRepeatedField(
-            com.google.protobuf.Descriptors.FieldDescriptor field,
-            java.lang.Object value) {
-          return super.addRepeatedField(field, value);
-        }
-        @java.lang.Override
-        public Builder mergeFrom(com.google.protobuf.Message other) {
-          if (other instanceof io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate) {
-            return mergeFrom((io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate)other);
-          } else {
-            super.mergeFrom(other);
-            return this;
-          }
-        }
-
-        public Builder mergeFrom(io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate other) {
-          if (other == io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.getDefaultInstance()) return this;
-          if (other.getPayload() != com.google.protobuf.ByteString.EMPTY) {
-            setPayload(other.getPayload());
-          }
-          if (other.getSignature() != com.google.protobuf.ByteString.EMPTY) {
-            setSignature(other.getSignature());
-          }
-          this.mergeUnknownFields(other.unknownFields);
-          onChanged();
-          return this;
-        }
-
-        @java.lang.Override
-        public final boolean isInitialized() {
-          return true;
-        }
-
-        @java.lang.Override
-        public Builder mergeFrom(
-            com.google.protobuf.CodedInputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-          io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate parsedMessage = null;
-          try {
-            parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-            parsedMessage = (io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate) e.getUnfinishedMessage();
-            throw e.unwrapIOException();
-          } finally {
-            if (parsedMessage != null) {
-              mergeFrom(parsedMessage);
-            }
-          }
-          return this;
-        }
-
-        private com.google.protobuf.ByteString payload_ = com.google.protobuf.ByteString.EMPTY;
-        /**
-         * <code>bytes payload = 1;</code>
-         * @return The payload.
-         */
-        public com.google.protobuf.ByteString getPayload() {
-          return payload_;
-        }
-        /**
-         * <code>bytes payload = 1;</code>
-         * @param value The payload to set.
-         * @return This builder for chaining.
-         */
-        public Builder setPayload(com.google.protobuf.ByteString value) {
-          if (value == null) {
-    throw new NullPointerException();
-  }
-  
-          payload_ = value;
-          onChanged();
-          return this;
-        }
-        /**
-         * <code>bytes payload = 1;</code>
-         * @return This builder for chaining.
-         */
-        public Builder clearPayload() {
-          
-          payload_ = getDefaultInstance().getPayload();
-          onChanged();
-          return this;
-        }
-
-        private com.google.protobuf.ByteString signature_ = com.google.protobuf.ByteString.EMPTY;
-        /**
-         * <code>bytes signature = 2;</code>
-         * @return The signature.
-         */
-        public com.google.protobuf.ByteString getSignature() {
-          return signature_;
-        }
-        /**
-         * <code>bytes signature = 2;</code>
-         * @param value The signature to set.
-         * @return This builder for chaining.
-         */
-        public Builder setSignature(com.google.protobuf.ByteString value) {
-          if (value == null) {
-    throw new NullPointerException();
-  }
-  
-          signature_ = value;
-          onChanged();
-          return this;
-        }
-        /**
-         * <code>bytes signature = 2;</code>
-         * @return This builder for chaining.
-         */
-        public Builder clearSignature() {
-          
-          signature_ = getDefaultInstance().getSignature();
-          onChanged();
-          return this;
-        }
-        @java.lang.Override
-        public final Builder setUnknownFields(
-            final com.google.protobuf.UnknownFieldSet unknownFields) {
-          return super.setUnknownFields(unknownFields);
-        }
-
-        @java.lang.Override
-        public final Builder mergeUnknownFields(
-            final com.google.protobuf.UnknownFieldSet unknownFields) {
-          return super.mergeUnknownFields(unknownFields);
-        }
-
-
-        // @@protoc_insertion_point(builder_scope:capbac.Invocation.ProofedCertificate)
-      }
-
-      // @@protoc_insertion_point(class_scope:capbac.Invocation.ProofedCertificate)
-      private static final io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate DEFAULT_INSTANCE;
-      static {
-        DEFAULT_INSTANCE = new io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate();
-      }
-
-      public static io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate getDefaultInstance() {
-        return DEFAULT_INSTANCE;
-      }
-
-      private static final com.google.protobuf.Parser<ProofedCertificate>
-          PARSER = new com.google.protobuf.AbstractParser<ProofedCertificate>() {
-        @java.lang.Override
-        public ProofedCertificate parsePartialFrom(
-            com.google.protobuf.CodedInputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return new ProofedCertificate(input, extensionRegistry);
-        }
-      };
-
-      public static com.google.protobuf.Parser<ProofedCertificate> parser() {
-        return PARSER;
-      }
-
-      @java.lang.Override
-      public com.google.protobuf.Parser<ProofedCertificate> getParserForType() {
-        return PARSER;
-      }
-
-      @java.lang.Override
-      public io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate getDefaultInstanceForType() {
-        return DEFAULT_INSTANCE;
-      }
-
-    }
-
     public interface PayloadOrBuilder extends
         // @@protoc_insertion_point(interface_extends:capbac.Invocation.Payload)
         com.google.protobuf.MessageOrBuilder {
 
       /**
-       * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+       * <code>.capbac.Certificate certificate = 1;</code>
+       * @return Whether the certificate field is set.
        */
-      java.util.List<io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate> 
-          getCertificatesList();
+      boolean hasCertificate();
       /**
-       * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+       * <code>.capbac.Certificate certificate = 1;</code>
+       * @return The certificate.
        */
-      io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate getCertificates(int index);
+      io.xapix.capbac.CapBACProto.Certificate getCertificate();
       /**
-       * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+       * <code>.capbac.Certificate certificate = 1;</code>
        */
-      int getCertificatesCount();
-      /**
-       * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-       */
-      java.util.List<? extends io.xapix.capbac.CapBACProto.Invocation.ProofedCertificateOrBuilder> 
-          getCertificatesOrBuilderList();
-      /**
-       * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-       */
-      io.xapix.capbac.CapBACProto.Invocation.ProofedCertificateOrBuilder getCertificatesOrBuilder(
-          int index);
+      io.xapix.capbac.CapBACProto.CertificateOrBuilder getCertificateOrBuilder();
 
       /**
        * <code>string invoker = 2;</code>
@@ -2781,7 +1792,6 @@ public final class CapBACProto {
         super(builder);
       }
       private Payload() {
-        certificates_ = java.util.Collections.emptyList();
         invoker_ = "";
         action_ = com.google.protobuf.ByteString.EMPTY;
       }
@@ -2806,7 +1816,6 @@ public final class CapBACProto {
         if (extensionRegistry == null) {
           throw new java.lang.NullPointerException();
         }
-        int mutable_bitField0_ = 0;
         com.google.protobuf.UnknownFieldSet.Builder unknownFields =
             com.google.protobuf.UnknownFieldSet.newBuilder();
         try {
@@ -2818,12 +1827,16 @@ public final class CapBACProto {
                 done = true;
                 break;
               case 10: {
-                if (!((mutable_bitField0_ & 0x00000001) != 0)) {
-                  certificates_ = new java.util.ArrayList<io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate>();
-                  mutable_bitField0_ |= 0x00000001;
+                io.xapix.capbac.CapBACProto.Certificate.Builder subBuilder = null;
+                if (certificate_ != null) {
+                  subBuilder = certificate_.toBuilder();
                 }
-                certificates_.add(
-                    input.readMessage(io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.parser(), extensionRegistry));
+                certificate_ = input.readMessage(io.xapix.capbac.CapBACProto.Certificate.parser(), extensionRegistry);
+                if (subBuilder != null) {
+                  subBuilder.mergeFrom(certificate_);
+                  certificate_ = subBuilder.buildPartial();
+                }
+
                 break;
               }
               case 18: {
@@ -2857,9 +1870,6 @@ public final class CapBACProto {
           throw new com.google.protobuf.InvalidProtocolBufferException(
               e).setUnfinishedMessage(this);
         } finally {
-          if (((mutable_bitField0_ & 0x00000001) != 0)) {
-            certificates_ = java.util.Collections.unmodifiableList(certificates_);
-          }
           this.unknownFields = unknownFields.build();
           makeExtensionsImmutable();
         }
@@ -2877,39 +1887,27 @@ public final class CapBACProto {
                 io.xapix.capbac.CapBACProto.Invocation.Payload.class, io.xapix.capbac.CapBACProto.Invocation.Payload.Builder.class);
       }
 
-      public static final int CERTIFICATES_FIELD_NUMBER = 1;
-      private java.util.List<io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate> certificates_;
+      public static final int CERTIFICATE_FIELD_NUMBER = 1;
+      private io.xapix.capbac.CapBACProto.Certificate certificate_;
       /**
-       * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+       * <code>.capbac.Certificate certificate = 1;</code>
+       * @return Whether the certificate field is set.
        */
-      public java.util.List<io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate> getCertificatesList() {
-        return certificates_;
+      public boolean hasCertificate() {
+        return certificate_ != null;
       }
       /**
-       * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+       * <code>.capbac.Certificate certificate = 1;</code>
+       * @return The certificate.
        */
-      public java.util.List<? extends io.xapix.capbac.CapBACProto.Invocation.ProofedCertificateOrBuilder> 
-          getCertificatesOrBuilderList() {
-        return certificates_;
+      public io.xapix.capbac.CapBACProto.Certificate getCertificate() {
+        return certificate_ == null ? io.xapix.capbac.CapBACProto.Certificate.getDefaultInstance() : certificate_;
       }
       /**
-       * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+       * <code>.capbac.Certificate certificate = 1;</code>
        */
-      public int getCertificatesCount() {
-        return certificates_.size();
-      }
-      /**
-       * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-       */
-      public io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate getCertificates(int index) {
-        return certificates_.get(index);
-      }
-      /**
-       * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-       */
-      public io.xapix.capbac.CapBACProto.Invocation.ProofedCertificateOrBuilder getCertificatesOrBuilder(
-          int index) {
-        return certificates_.get(index);
+      public io.xapix.capbac.CapBACProto.CertificateOrBuilder getCertificateOrBuilder() {
+        return getCertificate();
       }
 
       public static final int INVOKER_FIELD_NUMBER = 2;
@@ -2982,8 +1980,8 @@ public final class CapBACProto {
       @java.lang.Override
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
-        for (int i = 0; i < certificates_.size(); i++) {
-          output.writeMessage(1, certificates_.get(i));
+        if (certificate_ != null) {
+          output.writeMessage(1, getCertificate());
         }
         if (!getInvokerBytes().isEmpty()) {
           com.google.protobuf.GeneratedMessageV3.writeString(output, 2, invoker_);
@@ -3003,9 +2001,9 @@ public final class CapBACProto {
         if (size != -1) return size;
 
         size = 0;
-        for (int i = 0; i < certificates_.size(); i++) {
+        if (certificate_ != null) {
           size += com.google.protobuf.CodedOutputStream
-            .computeMessageSize(1, certificates_.get(i));
+            .computeMessageSize(1, getCertificate());
         }
         if (!getInvokerBytes().isEmpty()) {
           size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, invoker_);
@@ -3033,8 +2031,11 @@ public final class CapBACProto {
         }
         io.xapix.capbac.CapBACProto.Invocation.Payload other = (io.xapix.capbac.CapBACProto.Invocation.Payload) obj;
 
-        if (!getCertificatesList()
-            .equals(other.getCertificatesList())) return false;
+        if (hasCertificate() != other.hasCertificate()) return false;
+        if (hasCertificate()) {
+          if (!getCertificate()
+              .equals(other.getCertificate())) return false;
+        }
         if (!getInvoker()
             .equals(other.getInvoker())) return false;
         if (!getAction()
@@ -3052,9 +2053,9 @@ public final class CapBACProto {
         }
         int hash = 41;
         hash = (19 * hash) + getDescriptor().hashCode();
-        if (getCertificatesCount() > 0) {
-          hash = (37 * hash) + CERTIFICATES_FIELD_NUMBER;
-          hash = (53 * hash) + getCertificatesList().hashCode();
+        if (hasCertificate()) {
+          hash = (37 * hash) + CERTIFICATE_FIELD_NUMBER;
+          hash = (53 * hash) + getCertificate().hashCode();
         }
         hash = (37 * hash) + INVOKER_FIELD_NUMBER;
         hash = (53 * hash) + getInvoker().hashCode();
@@ -3191,17 +2192,16 @@ public final class CapBACProto {
         private void maybeForceBuilderInitialization() {
           if (com.google.protobuf.GeneratedMessageV3
                   .alwaysUseFieldBuilders) {
-            getCertificatesFieldBuilder();
           }
         }
         @java.lang.Override
         public Builder clear() {
           super.clear();
-          if (certificatesBuilder_ == null) {
-            certificates_ = java.util.Collections.emptyList();
-            bitField0_ = (bitField0_ & ~0x00000001);
+          if (certificateBuilder_ == null) {
+            certificate_ = null;
           } else {
-            certificatesBuilder_.clear();
+            certificate_ = null;
+            certificateBuilder_ = null;
           }
           invoker_ = "";
 
@@ -3235,15 +2235,10 @@ public final class CapBACProto {
         @java.lang.Override
         public io.xapix.capbac.CapBACProto.Invocation.Payload buildPartial() {
           io.xapix.capbac.CapBACProto.Invocation.Payload result = new io.xapix.capbac.CapBACProto.Invocation.Payload(this);
-          int from_bitField0_ = bitField0_;
-          if (certificatesBuilder_ == null) {
-            if (((bitField0_ & 0x00000001) != 0)) {
-              certificates_ = java.util.Collections.unmodifiableList(certificates_);
-              bitField0_ = (bitField0_ & ~0x00000001);
-            }
-            result.certificates_ = certificates_;
+          if (certificateBuilder_ == null) {
+            result.certificate_ = certificate_;
           } else {
-            result.certificates_ = certificatesBuilder_.build();
+            result.certificate_ = certificateBuilder_.build();
           }
           result.invoker_ = invoker_;
           result.action_ = action_;
@@ -3296,31 +2291,8 @@ public final class CapBACProto {
 
         public Builder mergeFrom(io.xapix.capbac.CapBACProto.Invocation.Payload other) {
           if (other == io.xapix.capbac.CapBACProto.Invocation.Payload.getDefaultInstance()) return this;
-          if (certificatesBuilder_ == null) {
-            if (!other.certificates_.isEmpty()) {
-              if (certificates_.isEmpty()) {
-                certificates_ = other.certificates_;
-                bitField0_ = (bitField0_ & ~0x00000001);
-              } else {
-                ensureCertificatesIsMutable();
-                certificates_.addAll(other.certificates_);
-              }
-              onChanged();
-            }
-          } else {
-            if (!other.certificates_.isEmpty()) {
-              if (certificatesBuilder_.isEmpty()) {
-                certificatesBuilder_.dispose();
-                certificatesBuilder_ = null;
-                certificates_ = other.certificates_;
-                bitField0_ = (bitField0_ & ~0x00000001);
-                certificatesBuilder_ = 
-                  com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
-                     getCertificatesFieldBuilder() : null;
-              } else {
-                certificatesBuilder_.addAllMessages(other.certificates_);
-              }
-            }
+          if (other.hasCertificate()) {
+            mergeCertificate(other.getCertificate());
           }
           if (!other.getInvoker().isEmpty()) {
             invoker_ = other.invoker_;
@@ -3360,246 +2332,124 @@ public final class CapBACProto {
           }
           return this;
         }
-        private int bitField0_;
 
-        private java.util.List<io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate> certificates_ =
-          java.util.Collections.emptyList();
-        private void ensureCertificatesIsMutable() {
-          if (!((bitField0_ & 0x00000001) != 0)) {
-            certificates_ = new java.util.ArrayList<io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate>(certificates_);
-            bitField0_ |= 0x00000001;
-           }
-        }
-
-        private com.google.protobuf.RepeatedFieldBuilderV3<
-            io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.Builder, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificateOrBuilder> certificatesBuilder_;
-
+        private io.xapix.capbac.CapBACProto.Certificate certificate_;
+        private com.google.protobuf.SingleFieldBuilderV3<
+            io.xapix.capbac.CapBACProto.Certificate, io.xapix.capbac.CapBACProto.Certificate.Builder, io.xapix.capbac.CapBACProto.CertificateOrBuilder> certificateBuilder_;
         /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+         * <code>.capbac.Certificate certificate = 1;</code>
+         * @return Whether the certificate field is set.
          */
-        public java.util.List<io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate> getCertificatesList() {
-          if (certificatesBuilder_ == null) {
-            return java.util.Collections.unmodifiableList(certificates_);
+        public boolean hasCertificate() {
+          return certificateBuilder_ != null || certificate_ != null;
+        }
+        /**
+         * <code>.capbac.Certificate certificate = 1;</code>
+         * @return The certificate.
+         */
+        public io.xapix.capbac.CapBACProto.Certificate getCertificate() {
+          if (certificateBuilder_ == null) {
+            return certificate_ == null ? io.xapix.capbac.CapBACProto.Certificate.getDefaultInstance() : certificate_;
           } else {
-            return certificatesBuilder_.getMessageList();
+            return certificateBuilder_.getMessage();
           }
         }
         /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+         * <code>.capbac.Certificate certificate = 1;</code>
          */
-        public int getCertificatesCount() {
-          if (certificatesBuilder_ == null) {
-            return certificates_.size();
-          } else {
-            return certificatesBuilder_.getCount();
-          }
-        }
-        /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-         */
-        public io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate getCertificates(int index) {
-          if (certificatesBuilder_ == null) {
-            return certificates_.get(index);
-          } else {
-            return certificatesBuilder_.getMessage(index);
-          }
-        }
-        /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-         */
-        public Builder setCertificates(
-            int index, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate value) {
-          if (certificatesBuilder_ == null) {
+        public Builder setCertificate(io.xapix.capbac.CapBACProto.Certificate value) {
+          if (certificateBuilder_ == null) {
             if (value == null) {
               throw new NullPointerException();
             }
-            ensureCertificatesIsMutable();
-            certificates_.set(index, value);
+            certificate_ = value;
             onChanged();
           } else {
-            certificatesBuilder_.setMessage(index, value);
+            certificateBuilder_.setMessage(value);
           }
+
           return this;
         }
         /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+         * <code>.capbac.Certificate certificate = 1;</code>
          */
-        public Builder setCertificates(
-            int index, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.Builder builderForValue) {
-          if (certificatesBuilder_ == null) {
-            ensureCertificatesIsMutable();
-            certificates_.set(index, builderForValue.build());
+        public Builder setCertificate(
+            io.xapix.capbac.CapBACProto.Certificate.Builder builderForValue) {
+          if (certificateBuilder_ == null) {
+            certificate_ = builderForValue.build();
             onChanged();
           } else {
-            certificatesBuilder_.setMessage(index, builderForValue.build());
+            certificateBuilder_.setMessage(builderForValue.build());
           }
+
           return this;
         }
         /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+         * <code>.capbac.Certificate certificate = 1;</code>
          */
-        public Builder addCertificates(io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate value) {
-          if (certificatesBuilder_ == null) {
-            if (value == null) {
-              throw new NullPointerException();
+        public Builder mergeCertificate(io.xapix.capbac.CapBACProto.Certificate value) {
+          if (certificateBuilder_ == null) {
+            if (certificate_ != null) {
+              certificate_ =
+                io.xapix.capbac.CapBACProto.Certificate.newBuilder(certificate_).mergeFrom(value).buildPartial();
+            } else {
+              certificate_ = value;
             }
-            ensureCertificatesIsMutable();
-            certificates_.add(value);
             onChanged();
           } else {
-            certificatesBuilder_.addMessage(value);
+            certificateBuilder_.mergeFrom(value);
           }
+
           return this;
         }
         /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+         * <code>.capbac.Certificate certificate = 1;</code>
          */
-        public Builder addCertificates(
-            int index, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate value) {
-          if (certificatesBuilder_ == null) {
-            if (value == null) {
-              throw new NullPointerException();
-            }
-            ensureCertificatesIsMutable();
-            certificates_.add(index, value);
+        public Builder clearCertificate() {
+          if (certificateBuilder_ == null) {
+            certificate_ = null;
             onChanged();
           } else {
-            certificatesBuilder_.addMessage(index, value);
+            certificate_ = null;
+            certificateBuilder_ = null;
           }
+
           return this;
         }
         /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+         * <code>.capbac.Certificate certificate = 1;</code>
          */
-        public Builder addCertificates(
-            io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.Builder builderForValue) {
-          if (certificatesBuilder_ == null) {
-            ensureCertificatesIsMutable();
-            certificates_.add(builderForValue.build());
-            onChanged();
+        public io.xapix.capbac.CapBACProto.Certificate.Builder getCertificateBuilder() {
+          
+          onChanged();
+          return getCertificateFieldBuilder().getBuilder();
+        }
+        /**
+         * <code>.capbac.Certificate certificate = 1;</code>
+         */
+        public io.xapix.capbac.CapBACProto.CertificateOrBuilder getCertificateOrBuilder() {
+          if (certificateBuilder_ != null) {
+            return certificateBuilder_.getMessageOrBuilder();
           } else {
-            certificatesBuilder_.addMessage(builderForValue.build());
-          }
-          return this;
-        }
-        /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-         */
-        public Builder addCertificates(
-            int index, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.Builder builderForValue) {
-          if (certificatesBuilder_ == null) {
-            ensureCertificatesIsMutable();
-            certificates_.add(index, builderForValue.build());
-            onChanged();
-          } else {
-            certificatesBuilder_.addMessage(index, builderForValue.build());
-          }
-          return this;
-        }
-        /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-         */
-        public Builder addAllCertificates(
-            java.lang.Iterable<? extends io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate> values) {
-          if (certificatesBuilder_ == null) {
-            ensureCertificatesIsMutable();
-            com.google.protobuf.AbstractMessageLite.Builder.addAll(
-                values, certificates_);
-            onChanged();
-          } else {
-            certificatesBuilder_.addAllMessages(values);
-          }
-          return this;
-        }
-        /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-         */
-        public Builder clearCertificates() {
-          if (certificatesBuilder_ == null) {
-            certificates_ = java.util.Collections.emptyList();
-            bitField0_ = (bitField0_ & ~0x00000001);
-            onChanged();
-          } else {
-            certificatesBuilder_.clear();
-          }
-          return this;
-        }
-        /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-         */
-        public Builder removeCertificates(int index) {
-          if (certificatesBuilder_ == null) {
-            ensureCertificatesIsMutable();
-            certificates_.remove(index);
-            onChanged();
-          } else {
-            certificatesBuilder_.remove(index);
-          }
-          return this;
-        }
-        /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-         */
-        public io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.Builder getCertificatesBuilder(
-            int index) {
-          return getCertificatesFieldBuilder().getBuilder(index);
-        }
-        /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-         */
-        public io.xapix.capbac.CapBACProto.Invocation.ProofedCertificateOrBuilder getCertificatesOrBuilder(
-            int index) {
-          if (certificatesBuilder_ == null) {
-            return certificates_.get(index);  } else {
-            return certificatesBuilder_.getMessageOrBuilder(index);
+            return certificate_ == null ?
+                io.xapix.capbac.CapBACProto.Certificate.getDefaultInstance() : certificate_;
           }
         }
         /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
+         * <code>.capbac.Certificate certificate = 1;</code>
          */
-        public java.util.List<? extends io.xapix.capbac.CapBACProto.Invocation.ProofedCertificateOrBuilder> 
-             getCertificatesOrBuilderList() {
-          if (certificatesBuilder_ != null) {
-            return certificatesBuilder_.getMessageOrBuilderList();
-          } else {
-            return java.util.Collections.unmodifiableList(certificates_);
-          }
-        }
-        /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-         */
-        public io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.Builder addCertificatesBuilder() {
-          return getCertificatesFieldBuilder().addBuilder(
-              io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.getDefaultInstance());
-        }
-        /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-         */
-        public io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.Builder addCertificatesBuilder(
-            int index) {
-          return getCertificatesFieldBuilder().addBuilder(
-              index, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.getDefaultInstance());
-        }
-        /**
-         * <code>repeated .capbac.Invocation.ProofedCertificate certificates = 1;</code>
-         */
-        public java.util.List<io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.Builder> 
-             getCertificatesBuilderList() {
-          return getCertificatesFieldBuilder().getBuilderList();
-        }
-        private com.google.protobuf.RepeatedFieldBuilderV3<
-            io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.Builder, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificateOrBuilder> 
-            getCertificatesFieldBuilder() {
-          if (certificatesBuilder_ == null) {
-            certificatesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-                io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificate.Builder, io.xapix.capbac.CapBACProto.Invocation.ProofedCertificateOrBuilder>(
-                    certificates_,
-                    ((bitField0_ & 0x00000001) != 0),
+        private com.google.protobuf.SingleFieldBuilderV3<
+            io.xapix.capbac.CapBACProto.Certificate, io.xapix.capbac.CapBACProto.Certificate.Builder, io.xapix.capbac.CapBACProto.CertificateOrBuilder> 
+            getCertificateFieldBuilder() {
+          if (certificateBuilder_ == null) {
+            certificateBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+                io.xapix.capbac.CapBACProto.Certificate, io.xapix.capbac.CapBACProto.Certificate.Builder, io.xapix.capbac.CapBACProto.CertificateOrBuilder>(
+                    getCertificate(),
                     getParentForChildren(),
                     isClean());
-            certificates_ = null;
+            certificate_ = null;
           }
-          return certificatesBuilder_;
+          return certificateBuilder_;
         }
 
         private java.lang.Object invoker_ = "";
@@ -4251,11 +3101,6 @@ public final class CapBACProto {
   }
 
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_capbac_Headers_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_capbac_Headers_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_capbac_Certificate_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -4271,11 +3116,6 @@ public final class CapBACProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_capbac_Invocation_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_capbac_Invocation_ProofedCertificate_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_capbac_Invocation_ProofedCertificate_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_capbac_Invocation_Payload_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -4289,31 +3129,23 @@ public final class CapBACProto {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\014capbac.proto\022\006capbac\"\t\n\007Headers\"\252\001\n\013Ce" +
-      "rtificate\022\017\n\007payload\030\001 \001(\014\022\021\n\tsignature\030" +
-      "\002 \001(\014\032w\n\007Payload\022#\n\006parent\030\001 \001(\0132\023.capba" +
-      "c.Certificate\022\022\n\ncapability\030\002 \001(\014\022\016\n\006iss" +
-      "uer\030\003 \001(\t\022\017\n\007subject\030\004 \001(\t\022\022\n\nexpiration" +
-      "\030\005 \001(\004\"\347\001\n\nInvocation\022\017\n\007payload\030\001 \001(\014\022\021" +
-      "\n\tsignature\030\002 \001(\014\0328\n\022ProofedCertificate\022" +
-      "\017\n\007payload\030\001 \001(\014\022\021\n\tsignature\030\002 \001(\014\032{\n\007P" +
-      "ayload\022;\n\014certificates\030\001 \003(\0132%.capbac.In" +
-      "vocation.ProofedCertificate\022\017\n\007invoker\030\002" +
-      " \001(\t\022\016\n\006action\030\003 \001(\014\022\022\n\nexpiration\030\004 \001(\004" +
-      "B\036\n\017io.xapix.capbacB\013CapBACProtob\006proto3"
+      "\n\014capbac.proto\022\006capbac\"\252\001\n\013Certificate\022\017" +
+      "\n\007payload\030\001 \001(\014\022\021\n\tsignature\030\002 \001(\014\032w\n\007Pa" +
+      "yload\022#\n\006parent\030\001 \001(\0132\023.capbac.Certifica" +
+      "te\022\022\n\ncapability\030\002 \001(\014\022\016\n\006issuer\030\003 \001(\t\022\017" +
+      "\n\007subject\030\004 \001(\t\022\022\n\nexpiration\030\005 \001(\004\"\232\001\n\n" +
+      "Invocation\022\017\n\007payload\030\001 \001(\014\022\021\n\tsignature" +
+      "\030\002 \001(\014\032h\n\007Payload\022(\n\013certificate\030\001 \001(\0132\023" +
+      ".capbac.Certificate\022\017\n\007invoker\030\002 \001(\t\022\016\n\006" +
+      "action\030\003 \001(\014\022\022\n\nexpiration\030\004 \001(\004B\036\n\017io.x" +
+      "apix.capbacB\013CapBACProtob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
         });
-    internal_static_capbac_Headers_descriptor =
-      getDescriptor().getMessageTypes().get(0);
-    internal_static_capbac_Headers_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_capbac_Headers_descriptor,
-        new java.lang.String[] { });
     internal_static_capbac_Certificate_descriptor =
-      getDescriptor().getMessageTypes().get(1);
+      getDescriptor().getMessageTypes().get(0);
     internal_static_capbac_Certificate_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_capbac_Certificate_descriptor,
@@ -4325,23 +3157,17 @@ public final class CapBACProto {
         internal_static_capbac_Certificate_Payload_descriptor,
         new java.lang.String[] { "Parent", "Capability", "Issuer", "Subject", "Expiration", });
     internal_static_capbac_Invocation_descriptor =
-      getDescriptor().getMessageTypes().get(2);
+      getDescriptor().getMessageTypes().get(1);
     internal_static_capbac_Invocation_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_capbac_Invocation_descriptor,
         new java.lang.String[] { "Payload", "Signature", });
-    internal_static_capbac_Invocation_ProofedCertificate_descriptor =
-      internal_static_capbac_Invocation_descriptor.getNestedTypes().get(0);
-    internal_static_capbac_Invocation_ProofedCertificate_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_capbac_Invocation_ProofedCertificate_descriptor,
-        new java.lang.String[] { "Payload", "Signature", });
     internal_static_capbac_Invocation_Payload_descriptor =
-      internal_static_capbac_Invocation_descriptor.getNestedTypes().get(1);
+      internal_static_capbac_Invocation_descriptor.getNestedTypes().get(0);
     internal_static_capbac_Invocation_Payload_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_capbac_Invocation_Payload_descriptor,
-        new java.lang.String[] { "Certificates", "Invoker", "Action", "Expiration", });
+        new java.lang.String[] { "Certificate", "Invoker", "Action", "Expiration", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

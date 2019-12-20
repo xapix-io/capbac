@@ -34,7 +34,6 @@ pub struct Actor {
     id: String,
     sk_path: String,
     pk_path: String,
-    sk_mapping: String,
     pk_mapping: String,
 }
 
@@ -43,14 +42,12 @@ impl Actor {
         let id = format!("http://{}.local", name);
         let sk_path = format!("./keys/{}.pem", name);
         let pk_path = format!("./keys/{}-pub.pem", name);
-        let sk_mapping = format!("{}={}", id, sk_path);
         let pk_mapping = format!("{}={}", id, pk_path);
         Actor {
             name: name.to_string(),
             id,
             sk_path,
             pk_path,
-            sk_mapping,
             pk_mapping
         }
     }
@@ -130,7 +127,7 @@ impl <'a> ForgeBlueprint<'a> {
             args.push(&self.target.actor.actor.id);
 
             args.push("--sk");
-            args.push(&self.target.actor.actor.sk_mapping)
+            args.push(&self.target.actor.actor.sk_path)
         }
 
         let mut ctx = self.target.ctx;

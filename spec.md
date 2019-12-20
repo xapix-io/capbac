@@ -7,8 +7,7 @@ Protocol Operations are defined via ocaml-like interface definition syntax
 ```
 caveat : Exp int
 
-keypairs : id -> sk
-holder : id -> keypairs -> holder
+holder : id -> sk -> holder
 trust-checker : id -> boolean
 
 forge : holder -> subject -> capability -> caveat list -> certificate

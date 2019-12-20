@@ -19,6 +19,7 @@ import org.bouncycastle.util.io.pem.PemReader;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
@@ -68,36 +69,6 @@ public class CapBACCli {
         abstract T parse(byte[] content);
     }
 
-    static class SKMapping extends IDMapping<ECPrivateKey>  {
-        SKMapping(String val) {
-            super(val);
-        }
-
-        static class Converter implements IStringConverter<SKMapping> {
-            @Override
-            public SKMapping convert(String value) {
-                return new SKMapping(value);
-            }
-        }
-        @Override
-        public ECPrivateKey parse(byte[] content) {
-            PEMParser pemParser = new PEMParser(new InputStreamReader(new ByteArrayInputStream(content)));
-            PEMKeyPair pemKeyPair = null;
-            try {
-                pemKeyPair = (PEMKeyPair)pemParser.readObject();
-
-
-                JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-                KeyPair keyPair = converter.getKeyPair(pemKeyPair);
-                pemParser.close();
-
-                return (ECPrivateKey) keyPair.getPrivate();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
     static class PKMapping extends IDMapping<ECPublicKey>  {
         PKMapping(String val) {
             super(val);
@@ -131,20 +102,31 @@ public class CapBACCli {
     }
 
 
-    static class HolderArgs implements CapBACKeypairs {
+    static class HolderArgs {
         @Parameter(names = "--me", description = "ID of holder", required = true, converter = URLConverter.class)
         URL me;
-        @Parameter(names = "--sk", description = "ID to private key map", converter = SKMapping.Converter.class)
-        List<SKMapping> ids = new ArrayList<>();
+        @Parameter(names = "--sk", description = "Private key", converter = HolderArgs.Converter.class)
+        ECPrivateKey sk;
 
-        @Override
-        public ECPrivateKey get(URL id) {
-            for (SKMapping mapping : ids) {
-                if (mapping.id.equals(id)) {
-                    return mapping.val;
+        static class Converter implements IStringConverter<ECPrivateKey> {
+            @Override
+            public ECPrivateKey convert(String path) {
+                try {
+                    String content = readFileToString(new File(path), StandardCharsets.UTF_8);
+                    PEMParser pemParser = new PEMParser(new StringReader(content));
+                    PEMKeyPair pemKeyPair = null;
+                    pemKeyPair = (PEMKeyPair)pemParser.readObject();
+
+
+                    JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+                    KeyPair keyPair = converter.getKeyPair(pemKeyPair);
+                    pemParser.close();
+
+                    return (ECPrivateKey) keyPair.getPrivate();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
-            return null;
         }
     }
 
@@ -178,8 +160,8 @@ public class CapBACCli {
         @Parameter(names = "--action", description = "Action", required = true)
         String action;
 
-        @Parameter(names = "--cert", description = "Certificates for invocation", converter = FileConverter.class)
-        List<File> certs;
+        @Parameter(names = "--cert", description = "Certificate for invocation", required = true, converter = FileConverter.class)
+        File cert;
 
         @Parameter(names = "--exp", description = "Expiration time")
         long exp = 0;
@@ -303,12 +285,9 @@ public class CapBACCli {
 
     private CapBACInvocation.Builder makeInvokeBuilder() throws CapBAC.Malformed {
         try {
-            CapBACInvocation.Builder builder = new CapBACInvocation.Builder(invokeArgs.action.getBytes())
+            CapBACInvocation.Builder builder = new CapBACInvocation.Builder(
+                    new CapBACCertificate(readFileToByteArray(invokeArgs.cert)), invokeArgs.action.getBytes())
                     .withExp(certArgs.exp);
-
-            for (File cert : invokeArgs.certs) {
-                builder.addCert(new CapBACCertificate(readFileToByteArray(cert)));
-            }
             return builder;
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -316,7 +295,7 @@ public class CapBACCli {
     }
 
     private CapBACHolder makeHolder() {
-        return new CapBACHolder(holderArgs.me, holderArgs);
+        return new CapBACHolder(holderArgs.me, holderArgs.sk);
     }
 
     public static void main(String[] argv) {
@@ -362,9 +341,7 @@ public class CapBACCli {
 
             CapBACProto.Invocation.Payload payload = CapBACProto.Invocation.Payload.parseFrom(inv.getProto().getPayload());
             System.out.println(JsonFormat.printer().print(payload));
-            for (CapBACCertificate cert : inv.getCertificates()) {
-                printCertificate(cert);
-            }
+            printCertificate(inv.getCertificate());
 
             return inv;
         }

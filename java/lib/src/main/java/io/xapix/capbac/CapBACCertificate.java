@@ -17,8 +17,8 @@ import java.util.Iterator;
 import java.util.stream.StreamSupport;
 
 public class CapBACCertificate implements Iterable<CapBACCertificate> {
-    CapBACProto.Certificate proto;
-    CapBACProto.Certificate.Payload payload;
+    final CapBACProto.Certificate proto;
+    final CapBACProto.Certificate.Payload payload;
     public CapBACCertificate(byte[] data) throws CapBAC.Malformed {
         try {
             this.proto = CapBACProto.Certificate.parseFrom(data);
@@ -43,7 +43,7 @@ public class CapBACCertificate implements Iterable<CapBACCertificate> {
         }
     }
 
-    public CapBACCertificate(CapBACProto.Certificate proto) {
+    CapBACCertificate(CapBACProto.Certificate proto) {
         this.proto = proto;
         try {
             this.payload = CapBACProto.Certificate.Payload.parseFrom(proto.getPayload());

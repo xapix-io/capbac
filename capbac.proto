@@ -18,13 +18,8 @@ message Certificate {
 }
 
 message Invocation {
-  message ProofedCertificate {
-    bytes payload = 1;
-    bytes signature = 2;
-  }
-
   message Payload {
-    repeated ProofedCertificate certificates = 1;
+    Certificate certificate = 1;
     string invoker = 2;
     bytes action = 3;
     uint64 expiration = 4;
