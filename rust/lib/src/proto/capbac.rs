@@ -27,132 +27,6 @@ use protobuf::ProtobufEnum as ProtobufEnum_imported_for_functions;
 const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_8_1;
 
 #[derive(PartialEq,Clone,Default)]
-pub struct Headers {
-    // special fields
-    pub unknown_fields: ::protobuf::UnknownFields,
-    pub cached_size: ::protobuf::CachedSize,
-}
-
-impl<'a> ::std::default::Default for &'a Headers {
-    fn default() -> &'a Headers {
-        <Headers as ::protobuf::Message>::default_instance()
-    }
-}
-
-impl Headers {
-    pub fn new() -> Headers {
-        ::std::default::Default::default()
-    }
-}
-
-impl ::protobuf::Message for Headers {
-    fn is_initialized(&self) -> bool {
-        true
-    }
-
-    fn merge_from(&mut self, is: &mut ::protobuf::CodedInputStream<'_>) -> ::protobuf::ProtobufResult<()> {
-        while !is.eof()? {
-            let (field_number, wire_type) = is.read_tag_unpack()?;
-            match field_number {
-                _ => {
-                    ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
-            };
-        }
-        ::std::result::Result::Ok(())
-    }
-
-    // Compute sizes of nested messages
-    #[allow(unused_variables)]
-    fn compute_size(&self) -> u32 {
-        let mut my_size = 0;
-        my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
-        self.cached_size.set(my_size);
-        my_size
-    }
-
-    fn write_to_with_cached_sizes(&self, os: &mut ::protobuf::CodedOutputStream<'_>) -> ::protobuf::ProtobufResult<()> {
-        os.write_unknown_fields(self.get_unknown_fields())?;
-        ::std::result::Result::Ok(())
-    }
-
-    fn get_cached_size(&self) -> u32 {
-        self.cached_size.get()
-    }
-
-    fn get_unknown_fields(&self) -> &::protobuf::UnknownFields {
-        &self.unknown_fields
-    }
-
-    fn mut_unknown_fields(&mut self) -> &mut ::protobuf::UnknownFields {
-        &mut self.unknown_fields
-    }
-
-    fn as_any(&self) -> &dyn (::std::any::Any) {
-        self as &dyn (::std::any::Any)
-    }
-    fn as_any_mut(&mut self) -> &mut dyn (::std::any::Any) {
-        self as &mut dyn (::std::any::Any)
-    }
-    fn into_any(self: Box<Self>) -> ::std::boxed::Box<dyn (::std::any::Any)> {
-        self
-    }
-
-    fn descriptor(&self) -> &'static ::protobuf::reflect::MessageDescriptor {
-        Self::descriptor_static()
-    }
-
-    fn new() -> Headers {
-        Headers::new()
-    }
-
-    fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static mut descriptor: ::protobuf::lazy::Lazy<::protobuf::reflect::MessageDescriptor> = ::protobuf::lazy::Lazy {
-            lock: ::protobuf::lazy::ONCE_INIT,
-            ptr: 0 as *const ::protobuf::reflect::MessageDescriptor,
-        };
-        unsafe {
-            descriptor.get(|| {
-                let fields = ::std::vec::Vec::new();
-                ::protobuf::reflect::MessageDescriptor::new::<Headers>(
-                    "Headers",
-                    fields,
-                    file_descriptor_proto()
-                )
-            })
-        }
-    }
-
-    fn default_instance() -> &'static Headers {
-        static mut instance: ::protobuf::lazy::Lazy<Headers> = ::protobuf::lazy::Lazy {
-            lock: ::protobuf::lazy::ONCE_INIT,
-            ptr: 0 as *const Headers,
-        };
-        unsafe {
-            instance.get(Headers::new)
-        }
-    }
-}
-
-impl ::protobuf::Clear for Headers {
-    fn clear(&mut self) {
-        self.unknown_fields.clear();
-    }
-}
-
-impl ::std::fmt::Debug for Headers {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-        ::protobuf::text_format::fmt(self, f)
-    }
-}
-
-impl ::protobuf::reflect::ProtobufValue for Headers {
-    fn as_ref(&self) -> ::protobuf::reflect::ProtobufValueRef {
-        ::protobuf::reflect::ProtobufValueRef::Message(self)
-    }
-}
-
-#[derive(PartialEq,Clone,Default)]
 pub struct Certificate {
     // message fields
     pub payload: ::std::vec::Vec<u8>,
@@ -920,220 +794,9 @@ impl ::protobuf::reflect::ProtobufValue for Invocation {
 }
 
 #[derive(PartialEq,Clone,Default)]
-pub struct Invocation_ProofedCertificate {
-    // message fields
-    pub payload: ::std::vec::Vec<u8>,
-    pub signature: ::std::vec::Vec<u8>,
-    // special fields
-    pub unknown_fields: ::protobuf::UnknownFields,
-    pub cached_size: ::protobuf::CachedSize,
-}
-
-impl<'a> ::std::default::Default for &'a Invocation_ProofedCertificate {
-    fn default() -> &'a Invocation_ProofedCertificate {
-        <Invocation_ProofedCertificate as ::protobuf::Message>::default_instance()
-    }
-}
-
-impl Invocation_ProofedCertificate {
-    pub fn new() -> Invocation_ProofedCertificate {
-        ::std::default::Default::default()
-    }
-
-    // bytes payload = 1;
-
-
-    pub fn get_payload(&self) -> &[u8] {
-        &self.payload
-    }
-    pub fn clear_payload(&mut self) {
-        self.payload.clear();
-    }
-
-    // Param is passed by value, moved
-    pub fn set_payload(&mut self, v: ::std::vec::Vec<u8>) {
-        self.payload = v;
-    }
-
-    // Mutable pointer to the field.
-    // If field is not initialized, it is initialized with default value first.
-    pub fn mut_payload(&mut self) -> &mut ::std::vec::Vec<u8> {
-        &mut self.payload
-    }
-
-    // Take field
-    pub fn take_payload(&mut self) -> ::std::vec::Vec<u8> {
-        ::std::mem::replace(&mut self.payload, ::std::vec::Vec::new())
-    }
-
-    // bytes signature = 2;
-
-
-    pub fn get_signature(&self) -> &[u8] {
-        &self.signature
-    }
-    pub fn clear_signature(&mut self) {
-        self.signature.clear();
-    }
-
-    // Param is passed by value, moved
-    pub fn set_signature(&mut self, v: ::std::vec::Vec<u8>) {
-        self.signature = v;
-    }
-
-    // Mutable pointer to the field.
-    // If field is not initialized, it is initialized with default value first.
-    pub fn mut_signature(&mut self) -> &mut ::std::vec::Vec<u8> {
-        &mut self.signature
-    }
-
-    // Take field
-    pub fn take_signature(&mut self) -> ::std::vec::Vec<u8> {
-        ::std::mem::replace(&mut self.signature, ::std::vec::Vec::new())
-    }
-}
-
-impl ::protobuf::Message for Invocation_ProofedCertificate {
-    fn is_initialized(&self) -> bool {
-        true
-    }
-
-    fn merge_from(&mut self, is: &mut ::protobuf::CodedInputStream<'_>) -> ::protobuf::ProtobufResult<()> {
-        while !is.eof()? {
-            let (field_number, wire_type) = is.read_tag_unpack()?;
-            match field_number {
-                1 => {
-                    ::protobuf::rt::read_singular_proto3_bytes_into(wire_type, is, &mut self.payload)?;
-                },
-                2 => {
-                    ::protobuf::rt::read_singular_proto3_bytes_into(wire_type, is, &mut self.signature)?;
-                },
-                _ => {
-                    ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
-            };
-        }
-        ::std::result::Result::Ok(())
-    }
-
-    // Compute sizes of nested messages
-    #[allow(unused_variables)]
-    fn compute_size(&self) -> u32 {
-        let mut my_size = 0;
-        if !self.payload.is_empty() {
-            my_size += ::protobuf::rt::bytes_size(1, &self.payload);
-        }
-        if !self.signature.is_empty() {
-            my_size += ::protobuf::rt::bytes_size(2, &self.signature);
-        }
-        my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
-        self.cached_size.set(my_size);
-        my_size
-    }
-
-    fn write_to_with_cached_sizes(&self, os: &mut ::protobuf::CodedOutputStream<'_>) -> ::protobuf::ProtobufResult<()> {
-        if !self.payload.is_empty() {
-            os.write_bytes(1, &self.payload)?;
-        }
-        if !self.signature.is_empty() {
-            os.write_bytes(2, &self.signature)?;
-        }
-        os.write_unknown_fields(self.get_unknown_fields())?;
-        ::std::result::Result::Ok(())
-    }
-
-    fn get_cached_size(&self) -> u32 {
-        self.cached_size.get()
-    }
-
-    fn get_unknown_fields(&self) -> &::protobuf::UnknownFields {
-        &self.unknown_fields
-    }
-
-    fn mut_unknown_fields(&mut self) -> &mut ::protobuf::UnknownFields {
-        &mut self.unknown_fields
-    }
-
-    fn as_any(&self) -> &dyn (::std::any::Any) {
-        self as &dyn (::std::any::Any)
-    }
-    fn as_any_mut(&mut self) -> &mut dyn (::std::any::Any) {
-        self as &mut dyn (::std::any::Any)
-    }
-    fn into_any(self: Box<Self>) -> ::std::boxed::Box<dyn (::std::any::Any)> {
-        self
-    }
-
-    fn descriptor(&self) -> &'static ::protobuf::reflect::MessageDescriptor {
-        Self::descriptor_static()
-    }
-
-    fn new() -> Invocation_ProofedCertificate {
-        Invocation_ProofedCertificate::new()
-    }
-
-    fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static mut descriptor: ::protobuf::lazy::Lazy<::protobuf::reflect::MessageDescriptor> = ::protobuf::lazy::Lazy {
-            lock: ::protobuf::lazy::ONCE_INIT,
-            ptr: 0 as *const ::protobuf::reflect::MessageDescriptor,
-        };
-        unsafe {
-            descriptor.get(|| {
-                let mut fields = ::std::vec::Vec::new();
-                fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
-                    "payload",
-                    |m: &Invocation_ProofedCertificate| { &m.payload },
-                    |m: &mut Invocation_ProofedCertificate| { &mut m.payload },
-                ));
-                fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
-                    "signature",
-                    |m: &Invocation_ProofedCertificate| { &m.signature },
-                    |m: &mut Invocation_ProofedCertificate| { &mut m.signature },
-                ));
-                ::protobuf::reflect::MessageDescriptor::new::<Invocation_ProofedCertificate>(
-                    "Invocation_ProofedCertificate",
-                    fields,
-                    file_descriptor_proto()
-                )
-            })
-        }
-    }
-
-    fn default_instance() -> &'static Invocation_ProofedCertificate {
-        static mut instance: ::protobuf::lazy::Lazy<Invocation_ProofedCertificate> = ::protobuf::lazy::Lazy {
-            lock: ::protobuf::lazy::ONCE_INIT,
-            ptr: 0 as *const Invocation_ProofedCertificate,
-        };
-        unsafe {
-            instance.get(Invocation_ProofedCertificate::new)
-        }
-    }
-}
-
-impl ::protobuf::Clear for Invocation_ProofedCertificate {
-    fn clear(&mut self) {
-        self.payload.clear();
-        self.signature.clear();
-        self.unknown_fields.clear();
-    }
-}
-
-impl ::std::fmt::Debug for Invocation_ProofedCertificate {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-        ::protobuf::text_format::fmt(self, f)
-    }
-}
-
-impl ::protobuf::reflect::ProtobufValue for Invocation_ProofedCertificate {
-    fn as_ref(&self) -> ::protobuf::reflect::ProtobufValueRef {
-        ::protobuf::reflect::ProtobufValueRef::Message(self)
-    }
-}
-
-#[derive(PartialEq,Clone,Default)]
 pub struct Invocation_Payload {
     // message fields
-    pub certificates: ::protobuf::RepeatedField<Invocation_ProofedCertificate>,
+    pub certificate: ::protobuf::SingularPtrField<Certificate>,
     pub invoker: ::std::string::String,
     pub action: ::std::vec::Vec<u8>,
     pub expiration: u64,
@@ -1153,29 +816,37 @@ impl Invocation_Payload {
         ::std::default::Default::default()
     }
 
-    // repeated .capbac.Invocation.ProofedCertificate certificates = 1;
+    // .capbac.Certificate certificate = 1;
 
 
-    pub fn get_certificates(&self) -> &[Invocation_ProofedCertificate] {
-        &self.certificates
+    pub fn get_certificate(&self) -> &Certificate {
+        self.certificate.as_ref().unwrap_or_else(|| Certificate::default_instance())
     }
-    pub fn clear_certificates(&mut self) {
-        self.certificates.clear();
+    pub fn clear_certificate(&mut self) {
+        self.certificate.clear();
+    }
+
+    pub fn has_certificate(&self) -> bool {
+        self.certificate.is_some()
     }
 
     // Param is passed by value, moved
-    pub fn set_certificates(&mut self, v: ::protobuf::RepeatedField<Invocation_ProofedCertificate>) {
-        self.certificates = v;
+    pub fn set_certificate(&mut self, v: Certificate) {
+        self.certificate = ::protobuf::SingularPtrField::some(v);
     }
 
     // Mutable pointer to the field.
-    pub fn mut_certificates(&mut self) -> &mut ::protobuf::RepeatedField<Invocation_ProofedCertificate> {
-        &mut self.certificates
+    // If field is not initialized, it is initialized with default value first.
+    pub fn mut_certificate(&mut self) -> &mut Certificate {
+        if self.certificate.is_none() {
+            self.certificate.set_default();
+        }
+        self.certificate.as_mut().unwrap()
     }
 
     // Take field
-    pub fn take_certificates(&mut self) -> ::protobuf::RepeatedField<Invocation_ProofedCertificate> {
-        ::std::mem::replace(&mut self.certificates, ::protobuf::RepeatedField::new())
+    pub fn take_certificate(&mut self) -> Certificate {
+        self.certificate.take().unwrap_or_else(|| Certificate::new())
     }
 
     // string invoker = 2;
@@ -1248,7 +919,7 @@ impl Invocation_Payload {
 
 impl ::protobuf::Message for Invocation_Payload {
     fn is_initialized(&self) -> bool {
-        for v in &self.certificates {
+        for v in &self.certificate {
             if !v.is_initialized() {
                 return false;
             }
@@ -1261,7 +932,7 @@ impl ::protobuf::Message for Invocation_Payload {
             let (field_number, wire_type) = is.read_tag_unpack()?;
             match field_number {
                 1 => {
-                    ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.certificates)?;
+                    ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.certificate)?;
                 },
                 2 => {
                     ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.invoker)?;
@@ -1288,10 +959,10 @@ impl ::protobuf::Message for Invocation_Payload {
     #[allow(unused_variables)]
     fn compute_size(&self) -> u32 {
         let mut my_size = 0;
-        for value in &self.certificates {
-            let len = value.compute_size();
+        if let Some(ref v) = self.certificate.as_ref() {
+            let len = v.compute_size();
             my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
+        }
         if !self.invoker.is_empty() {
             my_size += ::protobuf::rt::string_size(2, &self.invoker);
         }
@@ -1307,11 +978,11 @@ impl ::protobuf::Message for Invocation_Payload {
     }
 
     fn write_to_with_cached_sizes(&self, os: &mut ::protobuf::CodedOutputStream<'_>) -> ::protobuf::ProtobufResult<()> {
-        for v in &self.certificates {
+        if let Some(ref v) = self.certificate.as_ref() {
             os.write_tag(1, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
             v.write_to_with_cached_sizes(os)?;
-        };
+        }
         if !self.invoker.is_empty() {
             os.write_string(2, &self.invoker)?;
         }
@@ -1363,10 +1034,10 @@ impl ::protobuf::Message for Invocation_Payload {
         unsafe {
             descriptor.get(|| {
                 let mut fields = ::std::vec::Vec::new();
-                fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<Invocation_ProofedCertificate>>(
-                    "certificates",
-                    |m: &Invocation_Payload| { &m.certificates },
-                    |m: &mut Invocation_Payload| { &mut m.certificates },
+                fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<Certificate>>(
+                    "certificate",
+                    |m: &Invocation_Payload| { &m.certificate },
+                    |m: &mut Invocation_Payload| { &mut m.certificate },
                 ));
                 fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
                     "invoker",
@@ -1405,7 +1076,7 @@ impl ::protobuf::Message for Invocation_Payload {
 
 impl ::protobuf::Clear for Invocation_Payload {
     fn clear(&mut self) {
-        self.certificates.clear();
+        self.certificate.clear();
         self.invoker.clear();
         self.action.clear();
         self.expiration = 0;
@@ -1426,79 +1097,66 @@ impl ::protobuf::reflect::ProtobufValue for Invocation_Payload {
 }
 
 static file_descriptor_proto_data: &'static [u8] = b"\
-    \n\x0ccapbac.proto\x12\x06capbac\"\t\n\x07Headers\"\xf0\x01\n\x0bCertifi\
-    cate\x12\x18\n\x07payload\x18\x01\x20\x01(\x0cR\x07payload\x12\x1c\n\tsi\
-    gnature\x18\x02\x20\x01(\x0cR\tsignature\x1a\xa8\x01\n\x07Payload\x12+\n\
-    \x06parent\x18\x01\x20\x01(\x0b2\x13.capbac.CertificateR\x06parent\x12\
-    \x1e\n\ncapability\x18\x02\x20\x01(\x0cR\ncapability\x12\x16\n\x06issuer\
-    \x18\x03\x20\x01(\tR\x06issuer\x12\x18\n\x07subject\x18\x04\x20\x01(\tR\
-    \x07subject\x12\x1e\n\nexpiration\x18\x05\x20\x01(\x04R\nexpiration\"\
-    \xbb\x02\n\nInvocation\x12\x18\n\x07payload\x18\x01\x20\x01(\x0cR\x07pay\
-    load\x12\x1c\n\tsignature\x18\x02\x20\x01(\x0cR\tsignature\x1aL\n\x12Pro\
-    ofedCertificate\x12\x18\n\x07payload\x18\x01\x20\x01(\x0cR\x07payload\
-    \x12\x1c\n\tsignature\x18\x02\x20\x01(\x0cR\tsignature\x1a\xa6\x01\n\x07\
-    Payload\x12I\n\x0ccertificates\x18\x01\x20\x03(\x0b2%.capbac.Invocation.\
-    ProofedCertificateR\x0ccertificates\x12\x18\n\x07invoker\x18\x02\x20\x01\
-    (\tR\x07invoker\x12\x16\n\x06action\x18\x03\x20\x01(\x0cR\x06action\x12\
-    \x1e\n\nexpiration\x18\x04\x20\x01(\x04R\nexpirationB\x1e\n\x0fio.xapix.\
-    capbacB\x0bCapBACProtoJ\x83\t\n\x06\x12\x04\0\0&\x01\n\x08\n\x01\x0c\x12\
-    \x03\0\0\x12\n\x08\n\x01\x02\x12\x03\x02\0\x0f\n\x08\n\x01\x08\x12\x03\
-    \x04\0(\n\t\n\x02\x08\x01\x12\x03\x04\0(\n\x08\n\x01\x08\x12\x03\x05\0,\
-    \n\t\n\x02\x08\x08\x12\x03\x05\0,\n\n\n\x02\x04\0\x12\x04\x07\0\t\x01\n\
-    \n\n\x03\x04\0\x01\x12\x03\x07\x08\x0f\n\n\n\x02\x04\x01\x12\x04\x0b\0\
-    \x15\x01\n\n\n\x03\x04\x01\x01\x12\x03\x0b\x08\x13\n\x0c\n\x04\x04\x01\
-    \x03\0\x12\x04\x0c\x02\x12\x03\n\x0c\n\x05\x04\x01\x03\0\x01\x12\x03\x0c\
-    \n\x11\n\r\n\x06\x04\x01\x03\0\x02\0\x12\x03\r\x04\x1b\n\x0e\n\x07\x04\
-    \x01\x03\0\x02\0\x06\x12\x03\r\x04\x0f\n\x0e\n\x07\x04\x01\x03\0\x02\0\
-    \x01\x12\x03\r\x10\x16\n\x0e\n\x07\x04\x01\x03\0\x02\0\x03\x12\x03\r\x19\
-    \x1a\n\r\n\x06\x04\x01\x03\0\x02\x01\x12\x03\x0e\x04\x19\n\x0e\n\x07\x04\
-    \x01\x03\0\x02\x01\x05\x12\x03\x0e\x04\t\n\x0e\n\x07\x04\x01\x03\0\x02\
-    \x01\x01\x12\x03\x0e\n\x14\n\x0e\n\x07\x04\x01\x03\0\x02\x01\x03\x12\x03\
-    \x0e\x17\x18\n\r\n\x06\x04\x01\x03\0\x02\x02\x12\x03\x0f\x04\x16\n\x0e\n\
-    \x07\x04\x01\x03\0\x02\x02\x05\x12\x03\x0f\x04\n\n\x0e\n\x07\x04\x01\x03\
-    \0\x02\x02\x01\x12\x03\x0f\x0b\x11\n\x0e\n\x07\x04\x01\x03\0\x02\x02\x03\
-    \x12\x03\x0f\x14\x15\n\r\n\x06\x04\x01\x03\0\x02\x03\x12\x03\x10\x04\x17\
-    \n\x0e\n\x07\x04\x01\x03\0\x02\x03\x05\x12\x03\x10\x04\n\n\x0e\n\x07\x04\
-    \x01\x03\0\x02\x03\x01\x12\x03\x10\x0b\x12\n\x0e\n\x07\x04\x01\x03\0\x02\
-    \x03\x03\x12\x03\x10\x15\x16\n\r\n\x06\x04\x01\x03\0\x02\x04\x12\x03\x11\
-    \x04\x1a\n\x0e\n\x07\x04\x01\x03\0\x02\x04\x05\x12\x03\x11\x04\n\n\x0e\n\
-    \x07\x04\x01\x03\0\x02\x04\x01\x12\x03\x11\x0b\x15\n\x0e\n\x07\x04\x01\
-    \x03\0\x02\x04\x03\x12\x03\x11\x18\x19\n\x0b\n\x04\x04\x01\x02\0\x12\x03\
-    \x13\x02\x14\n\x0c\n\x05\x04\x01\x02\0\x05\x12\x03\x13\x02\x07\n\x0c\n\
-    \x05\x04\x01\x02\0\x01\x12\x03\x13\x08\x0f\n\x0c\n\x05\x04\x01\x02\0\x03\
-    \x12\x03\x13\x12\x13\n\x0b\n\x04\x04\x01\x02\x01\x12\x03\x14\x02\x16\n\
-    \x0c\n\x05\x04\x01\x02\x01\x05\x12\x03\x14\x02\x07\n\x0c\n\x05\x04\x01\
-    \x02\x01\x01\x12\x03\x14\x08\x11\n\x0c\n\x05\x04\x01\x02\x01\x03\x12\x03\
-    \x14\x14\x15\n\n\n\x02\x04\x02\x12\x04\x17\0&\x01\n\n\n\x03\x04\x02\x01\
-    \x12\x03\x17\x08\x12\n\x0c\n\x04\x04\x02\x03\0\x12\x04\x18\x02\x1b\x03\n\
-    \x0c\n\x05\x04\x02\x03\0\x01\x12\x03\x18\n\x1c\n\r\n\x06\x04\x02\x03\0\
-    \x02\0\x12\x03\x19\x04\x16\n\x0e\n\x07\x04\x02\x03\0\x02\0\x05\x12\x03\
-    \x19\x04\t\n\x0e\n\x07\x04\x02\x03\0\x02\0\x01\x12\x03\x19\n\x11\n\x0e\n\
-    \x07\x04\x02\x03\0\x02\0\x03\x12\x03\x19\x14\x15\n\r\n\x06\x04\x02\x03\0\
-    \x02\x01\x12\x03\x1a\x04\x18\n\x0e\n\x07\x04\x02\x03\0\x02\x01\x05\x12\
-    \x03\x1a\x04\t\n\x0e\n\x07\x04\x02\x03\0\x02\x01\x01\x12\x03\x1a\n\x13\n\
-    \x0e\n\x07\x04\x02\x03\0\x02\x01\x03\x12\x03\x1a\x16\x17\n\x0c\n\x04\x04\
-    \x02\x03\x01\x12\x04\x1d\x02\"\x03\n\x0c\n\x05\x04\x02\x03\x01\x01\x12\
-    \x03\x1d\n\x11\n\r\n\x06\x04\x02\x03\x01\x02\0\x12\x03\x1e\x041\n\x0e\n\
-    \x07\x04\x02\x03\x01\x02\0\x04\x12\x03\x1e\x04\x0c\n\x0e\n\x07\x04\x02\
-    \x03\x01\x02\0\x06\x12\x03\x1e\r\x1f\n\x0e\n\x07\x04\x02\x03\x01\x02\0\
-    \x01\x12\x03\x1e\x20,\n\x0e\n\x07\x04\x02\x03\x01\x02\0\x03\x12\x03\x1e/\
-    0\n\r\n\x06\x04\x02\x03\x01\x02\x01\x12\x03\x1f\x04\x17\n\x0e\n\x07\x04\
-    \x02\x03\x01\x02\x01\x05\x12\x03\x1f\x04\n\n\x0e\n\x07\x04\x02\x03\x01\
-    \x02\x01\x01\x12\x03\x1f\x0b\x12\n\x0e\n\x07\x04\x02\x03\x01\x02\x01\x03\
-    \x12\x03\x1f\x15\x16\n\r\n\x06\x04\x02\x03\x01\x02\x02\x12\x03\x20\x04\
-    \x15\n\x0e\n\x07\x04\x02\x03\x01\x02\x02\x05\x12\x03\x20\x04\t\n\x0e\n\
-    \x07\x04\x02\x03\x01\x02\x02\x01\x12\x03\x20\n\x10\n\x0e\n\x07\x04\x02\
-    \x03\x01\x02\x02\x03\x12\x03\x20\x13\x14\n\r\n\x06\x04\x02\x03\x01\x02\
-    \x03\x12\x03!\x04\x1a\n\x0e\n\x07\x04\x02\x03\x01\x02\x03\x05\x12\x03!\
-    \x04\n\n\x0e\n\x07\x04\x02\x03\x01\x02\x03\x01\x12\x03!\x0b\x15\n\x0e\n\
-    \x07\x04\x02\x03\x01\x02\x03\x03\x12\x03!\x18\x19\n\x0b\n\x04\x04\x02\
-    \x02\0\x12\x03$\x02\x14\n\x0c\n\x05\x04\x02\x02\0\x05\x12\x03$\x02\x07\n\
-    \x0c\n\x05\x04\x02\x02\0\x01\x12\x03$\x08\x0f\n\x0c\n\x05\x04\x02\x02\0\
-    \x03\x12\x03$\x12\x13\n\x0b\n\x04\x04\x02\x02\x01\x12\x03%\x02\x16\n\x0c\
-    \n\x05\x04\x02\x02\x01\x05\x12\x03%\x02\x07\n\x0c\n\x05\x04\x02\x02\x01\
-    \x01\x12\x03%\x08\x11\n\x0c\n\x05\x04\x02\x02\x01\x03\x12\x03%\x14\x15b\
-    \x06proto3\
+    \n\x0ccapbac.proto\x12\x06capbac\"\xf0\x01\n\x0bCertificate\x12\x18\n\
+    \x07payload\x18\x01\x20\x01(\x0cR\x07payload\x12\x1c\n\tsignature\x18\
+    \x02\x20\x01(\x0cR\tsignature\x1a\xa8\x01\n\x07Payload\x12+\n\x06parent\
+    \x18\x01\x20\x01(\x0b2\x13.capbac.CertificateR\x06parent\x12\x1e\n\ncapa\
+    bility\x18\x02\x20\x01(\x0cR\ncapability\x12\x16\n\x06issuer\x18\x03\x20\
+    \x01(\tR\x06issuer\x12\x18\n\x07subject\x18\x04\x20\x01(\tR\x07subject\
+    \x12\x1e\n\nexpiration\x18\x05\x20\x01(\x04R\nexpiration\"\xd9\x01\n\nIn\
+    vocation\x12\x18\n\x07payload\x18\x01\x20\x01(\x0cR\x07payload\x12\x1c\n\
+    \tsignature\x18\x02\x20\x01(\x0cR\tsignature\x1a\x92\x01\n\x07Payload\
+    \x125\n\x0bcertificate\x18\x01\x20\x01(\x0b2\x13.capbac.CertificateR\x0b\
+    certificate\x12\x18\n\x07invoker\x18\x02\x20\x01(\tR\x07invoker\x12\x16\
+    \n\x06action\x18\x03\x20\x01(\x0cR\x06action\x12\x1e\n\nexpiration\x18\
+    \x04\x20\x01(\x04R\nexpirationB\x1e\n\x0fio.xapix.capbacB\x0bCapBACProto\
+    J\xc1\x07\n\x06\x12\x04\0\0\x1d\x01\n\x08\n\x01\x0c\x12\x03\0\0\x12\n\
+    \x08\n\x01\x02\x12\x03\x02\0\x0f\n\x08\n\x01\x08\x12\x03\x04\0(\n\t\n\
+    \x02\x08\x01\x12\x03\x04\0(\n\x08\n\x01\x08\x12\x03\x05\0,\n\t\n\x02\x08\
+    \x08\x12\x03\x05\0,\n\n\n\x02\x04\0\x12\x04\x07\0\x11\x01\n\n\n\x03\x04\
+    \0\x01\x12\x03\x07\x08\x13\n\x0c\n\x04\x04\0\x03\0\x12\x04\x08\x02\x0e\
+    \x03\n\x0c\n\x05\x04\0\x03\0\x01\x12\x03\x08\n\x11\n\r\n\x06\x04\0\x03\0\
+    \x02\0\x12\x03\t\x04\x1b\n\x0e\n\x07\x04\0\x03\0\x02\0\x06\x12\x03\t\x04\
+    \x0f\n\x0e\n\x07\x04\0\x03\0\x02\0\x01\x12\x03\t\x10\x16\n\x0e\n\x07\x04\
+    \0\x03\0\x02\0\x03\x12\x03\t\x19\x1a\n\r\n\x06\x04\0\x03\0\x02\x01\x12\
+    \x03\n\x04\x19\n\x0e\n\x07\x04\0\x03\0\x02\x01\x05\x12\x03\n\x04\t\n\x0e\
+    \n\x07\x04\0\x03\0\x02\x01\x01\x12\x03\n\n\x14\n\x0e\n\x07\x04\0\x03\0\
+    \x02\x01\x03\x12\x03\n\x17\x18\n\r\n\x06\x04\0\x03\0\x02\x02\x12\x03\x0b\
+    \x04\x16\n\x0e\n\x07\x04\0\x03\0\x02\x02\x05\x12\x03\x0b\x04\n\n\x0e\n\
+    \x07\x04\0\x03\0\x02\x02\x01\x12\x03\x0b\x0b\x11\n\x0e\n\x07\x04\0\x03\0\
+    \x02\x02\x03\x12\x03\x0b\x14\x15\n\r\n\x06\x04\0\x03\0\x02\x03\x12\x03\
+    \x0c\x04\x17\n\x0e\n\x07\x04\0\x03\0\x02\x03\x05\x12\x03\x0c\x04\n\n\x0e\
+    \n\x07\x04\0\x03\0\x02\x03\x01\x12\x03\x0c\x0b\x12\n\x0e\n\x07\x04\0\x03\
+    \0\x02\x03\x03\x12\x03\x0c\x15\x16\n\r\n\x06\x04\0\x03\0\x02\x04\x12\x03\
+    \r\x04\x1a\n\x0e\n\x07\x04\0\x03\0\x02\x04\x05\x12\x03\r\x04\n\n\x0e\n\
+    \x07\x04\0\x03\0\x02\x04\x01\x12\x03\r\x0b\x15\n\x0e\n\x07\x04\0\x03\0\
+    \x02\x04\x03\x12\x03\r\x18\x19\n\x0b\n\x04\x04\0\x02\0\x12\x03\x0f\x02\
+    \x14\n\x0c\n\x05\x04\0\x02\0\x05\x12\x03\x0f\x02\x07\n\x0c\n\x05\x04\0\
+    \x02\0\x01\x12\x03\x0f\x08\x0f\n\x0c\n\x05\x04\0\x02\0\x03\x12\x03\x0f\
+    \x12\x13\n\x0b\n\x04\x04\0\x02\x01\x12\x03\x10\x02\x16\n\x0c\n\x05\x04\0\
+    \x02\x01\x05\x12\x03\x10\x02\x07\n\x0c\n\x05\x04\0\x02\x01\x01\x12\x03\
+    \x10\x08\x11\n\x0c\n\x05\x04\0\x02\x01\x03\x12\x03\x10\x14\x15\n\n\n\x02\
+    \x04\x01\x12\x04\x13\0\x1d\x01\n\n\n\x03\x04\x01\x01\x12\x03\x13\x08\x12\
+    \n\x0c\n\x04\x04\x01\x03\0\x12\x04\x14\x02\x19\x03\n\x0c\n\x05\x04\x01\
+    \x03\0\x01\x12\x03\x14\n\x11\n\r\n\x06\x04\x01\x03\0\x02\0\x12\x03\x15\
+    \x04\x20\n\x0e\n\x07\x04\x01\x03\0\x02\0\x06\x12\x03\x15\x04\x0f\n\x0e\n\
+    \x07\x04\x01\x03\0\x02\0\x01\x12\x03\x15\x10\x1b\n\x0e\n\x07\x04\x01\x03\
+    \0\x02\0\x03\x12\x03\x15\x1e\x1f\n\r\n\x06\x04\x01\x03\0\x02\x01\x12\x03\
+    \x16\x04\x17\n\x0e\n\x07\x04\x01\x03\0\x02\x01\x05\x12\x03\x16\x04\n\n\
+    \x0e\n\x07\x04\x01\x03\0\x02\x01\x01\x12\x03\x16\x0b\x12\n\x0e\n\x07\x04\
+    \x01\x03\0\x02\x01\x03\x12\x03\x16\x15\x16\n\r\n\x06\x04\x01\x03\0\x02\
+    \x02\x12\x03\x17\x04\x15\n\x0e\n\x07\x04\x01\x03\0\x02\x02\x05\x12\x03\
+    \x17\x04\t\n\x0e\n\x07\x04\x01\x03\0\x02\x02\x01\x12\x03\x17\n\x10\n\x0e\
+    \n\x07\x04\x01\x03\0\x02\x02\x03\x12\x03\x17\x13\x14\n\r\n\x06\x04\x01\
+    \x03\0\x02\x03\x12\x03\x18\x04\x1a\n\x0e\n\x07\x04\x01\x03\0\x02\x03\x05\
+    \x12\x03\x18\x04\n\n\x0e\n\x07\x04\x01\x03\0\x02\x03\x01\x12\x03\x18\x0b\
+    \x15\n\x0e\n\x07\x04\x01\x03\0\x02\x03\x03\x12\x03\x18\x18\x19\n\x0b\n\
+    \x04\x04\x01\x02\0\x12\x03\x1b\x02\x14\n\x0c\n\x05\x04\x01\x02\0\x05\x12\
+    \x03\x1b\x02\x07\n\x0c\n\x05\x04\x01\x02\0\x01\x12\x03\x1b\x08\x0f\n\x0c\
+    \n\x05\x04\x01\x02\0\x03\x12\x03\x1b\x12\x13\n\x0b\n\x04\x04\x01\x02\x01\
+    \x12\x03\x1c\x02\x16\n\x0c\n\x05\x04\x01\x02\x01\x05\x12\x03\x1c\x02\x07\
+    \n\x0c\n\x05\x04\x01\x02\x01\x01\x12\x03\x1c\x08\x11\n\x0c\n\x05\x04\x01\
+    \x02\x01\x03\x12\x03\x1c\x14\x15b\x06proto3\
 ";
 
 static mut file_descriptor_proto_lazy: ::protobuf::lazy::Lazy<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::lazy::Lazy {

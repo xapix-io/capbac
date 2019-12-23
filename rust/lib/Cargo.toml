@@ -8,5 +8,6 @@ edition = "2018"
 
 [dependencies]
 protobuf = "2.8.1"
-ring = "0.16.9"
 url = "2.1.0"
+openssl = "0.10.26"
+thiserror = "1.0"

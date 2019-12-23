@@ -1,8 +1,10 @@
-use std::path::Path;
-use url::Url;
 use duct;
 use std::rc::Rc;
 use itertools::Itertools;
+use std::io;
+use std::collections::HashMap;
+use snafu::{ResultExt, Snafu};
+use ansi_term::Colour::{Red, Green};
 
 struct Impl {
     cmd: String,
@@ -10,7 +12,7 @@ struct Impl {
 }
 
 impl Impl {
-    fn cmd(&self, stdin: Option<Rc<Container>>, args: &[&str], stdout: Option<Rc<Container>>, expected_exit_code: u32) -> Cmd {
+    fn cmd(&self, stdin: Option<Rc<Container>>, args: &[&str], stdout: Option<Rc<Container>>, expected_exit_code: i32) -> Cmd {
         let mut cmd_args = self.args.clone();
         for arg in args {
             cmd_args.push(arg.to_string());
@@ -19,7 +21,8 @@ impl Impl {
             stdin: stdin,
             stdout: stdout,
             cmd: self.cmd.clone(),
-            args: cmd_args
+            args: cmd_args,
+            expected_exit_code
         }
     }
 }
@@ -29,12 +32,13 @@ pub struct ActorImpl<'a> {
     implementation: &'a Impl,
 }
 
+#[derive(Debug, Clone)]
 pub struct Actor {
-    name: String,
-    id: String,
-    sk_path: String,
-    pk_path: String,
-    pk_mapping: String,
+    pub name: String,
+    pub id: String,
+    pub sk_path: String,
+    pub pk_path: String,
+    pub pk_mapping: String,
 }
 
 impl Actor {
@@ -51,17 +55,48 @@ impl Actor {
             pk_mapping
         }
     }
+
+    fn bad_new(name: &str, pk_path: &str) -> Actor {
+        let id = format!("http://{}.local", name);
+        let sk_path = format!("./keys/{}.pem", name);
+        let pk_mapping = format!("{}={}", id, pk_path);
+        Actor {
+            name: name.to_string(),
+            id,
+            sk_path,
+            pk_path: pk_path.to_string(),
+            pk_mapping,
+        }
+    }
 }
 
+#[derive(Debug)]
 pub struct Container {
     name: String
 }
 
+#[derive(Debug)]
 struct Cmd {
     stdin: Option<Rc<Container>>,
     stdout: Option<Rc<Container>>,
     cmd: String,
-    args: Vec<String>
+    args: Vec<String>,
+    expected_exit_code: i32
+}
+
+#[derive(Debug, Snafu)]
+enum CmdError<'a> {
+    #[snafu(display("Error while executing {}: {}", command.as_shell(), source))]
+    ExecError {
+        command: &'a Cmd,
+        source: io::Error
+    },
+    #[snafu(display("Unexpected exit code for command {}. {} was expected, actual is {}", command.as_shell(), expected, actual))]
+    UnexpectedExitCode {
+        command: &'a Cmd,
+        expected: i32,
+        actual: i32
+    }
 }
 
 impl Cmd {
@@ -84,12 +119,42 @@ impl Cmd {
         }
         cmd
     }
+
+    fn to_duct(&self, data: &HashMap<String, Vec<u8>>) -> duct::Expression {
+        let mut cmd = duct::cmd(&self.cmd, &self.args).unchecked();
+
+        if let Some(ref c) = self.stdin {
+            cmd = cmd.stdin_bytes(data.get(&c.name).unwrap().clone());
+        }
+        cmd = cmd.stdout_capture();
+        cmd = cmd.stderr_capture();
+
+        return cmd
+    }
+
+    fn exec(&self, data: &mut HashMap<String, Vec<u8>>) -> Result<(), CmdError> {
+        let res = self.to_duct(data).run().context(ExecError { command: self })?;
+        if let Some(ref c) = self.stdout {
+            data.insert(c.name.clone(), res.stdout);
+        }
+        let code = res.status.code().unwrap();
+        if code != self.expected_exit_code {
+            Err(CmdError::UnexpectedExitCode {
+                expected: self.expected_exit_code,
+                actual: code,
+                command: self,
+            })
+        } else {
+            Ok(())
+        }
+    }
 }
 
 pub struct System<'a> {
     pub alice: ActorImpl<'a>,
     pub bob: ActorImpl<'a>,
     pub service: ActorImpl<'a>,
+    pub bad_alice: ActorImpl<'a>,
 }
 
 pub struct Ctx<'a> {
@@ -108,13 +173,13 @@ pub struct ForgeBlueprint<'a> {
 }
 
 impl <'a> ForgeBlueprint<'a> {
-    fn without_holder_args(self) -> Self {
+    pub fn without_holder_args(self) -> Self {
         Self { with_holder_args: false, ..self }
     }
 
     pub fn ok(self) -> (Ctx<'a>, Rc<Container>) {
         let mut args= vec!["forge", "--capability", self.capability, "--subject", &self.subject.actor.id];
-        let mut exp_arg;
+        let exp_arg;
 
         if let Some(exp) = self.exp {
             exp_arg = exp.to_string();
@@ -150,7 +215,7 @@ pub struct CertValidateBlueprint<'a> {
 }
 
 impl <'a> CertValidateBlueprint<'a> {
-    pub fn doit(self, exit_code: u32) -> Ctx<'a> {
+    pub fn doit(self, exit_code: i32) -> Ctx<'a> {
         let now = self.target.ctx.now.to_string();
         let mut args= vec!["certificate-validate", "--trust-ids", &self.trust_regex, "--now", &now];
 
@@ -163,7 +228,7 @@ impl <'a> CertValidateBlueprint<'a> {
         ctx.commands.push(self.target.actor.implementation.cmd(
             Some(self.cert),
             &args,
-            None, 0));
+            None, exit_code));
 
         ctx
     }
@@ -206,6 +271,21 @@ impl<'a> Ctx<'a> {
         }
     }
 
+    pub fn alice(self) -> TargetBlueprint<'a> {
+        let actor = &self.system.alice;
+        TargetBlueprint {
+            ctx: self,
+            actor
+        }
+    }
+    pub fn bob(self) -> TargetBlueprint<'a> {
+        let actor = &self.system.bob;
+        TargetBlueprint {
+            ctx: self,
+            actor
+        }
+    }
+
     fn new_container(&mut self, prefix: &str) -> Rc<Container> {
         self.container_counter += 1;
         Rc::new(Container {
@@ -213,10 +293,13 @@ impl<'a> Ctx<'a> {
         })
     }
 
-    fn run(&self) {
+    fn run(&self) -> Result<(), CmdError> {
+        let mut data = HashMap::new();
         for command in &self.commands {
-            println!("{}", command.as_shell())
+            println!("{}", command.as_shell());
+            command.exec(&mut data)?
         }
+        Ok(())
     }
 }
 
@@ -241,12 +324,18 @@ pub fn run(suite: &[fn(Ctx) -> Ctx]) {
         implementation: &java
     };
 
+    let bad_alice_actor = Actor::bad_new("alice", &bob_actor.pk_path);
+
     let system = System {
-        service, alice, bob
+        service, alice, bob,
+        bad_alice: ActorImpl {
+            actor: &bad_alice_actor,
+            implementation: &java
+        }
     };
 
     for case in suite {
-        let mut ctx = Ctx {
+        let ctx = Ctx {
             system: &system,
             commands: vec![],
             container_counter: 0,
@@ -254,6 +343,10 @@ pub fn run(suite: &[fn(Ctx) -> Ctx]) {
         };
 
         let ctx = case(ctx);
-        ctx.run();
+        match ctx.run() {
+            Ok(()) => { println!("[{}]", Green.paint("SUCESS")) }
+            Err(err) => { println!("[{}]: {}", Red.paint("ERROR"), err) }
+        }
+
     }
 }

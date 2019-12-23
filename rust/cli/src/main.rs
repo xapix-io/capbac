@@ -1,17 +1,20 @@
+use openssl::ec::EcKey;
+use openssl::ecdsa::EcdsaSig;
+use openssl::pkey::PKey;
 use std::error::Error;
-use std::path::{PathBuf, Path};
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 use url::Url;
 
 fn parse_id_pair(s: &str) -> Result<(Url, PublicKey), Box<dyn Error>>
-    where
+where
 {
     let pos = s
         .find('=')
         .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{}`", s))?;
     let path: PathBuf = s[pos + 1..].parse()?;
     let key = UnparsedPublicKey::new(&ECDSA_P256_SHA256_ASN1, read_file(&path)?);
-    Ok((s[..pos].parse()?, PublicKey { unparsed: key } ))
+    Ok((s[..pos].parse()?, PublicKey { unparsed: key }))
 }
 
 fn read_file(path: &std::path::Path) -> Result<Vec<u8>, Box<dyn Error>> {
@@ -25,7 +28,8 @@ fn read_file(path: &std::path::Path) -> Result<Vec<u8>, Box<dyn Error>> {
 
 fn parse_priv_key(s: &str) -> Result<EcdsaKeyPair, Box<dyn Error>> {
     let path: PathBuf = s.parse()?;
-    let key = EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_ASN1_SIGNING, &read_file(&path)?).unwrap();
+    let key =
+        EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_ASN1_SIGNING, &read_file(&path)?).unwrap();
     Ok(key)
 }
 
@@ -60,7 +64,7 @@ struct CertArgs {
 }
 
 struct PublicKey {
-    unparsed: UnparsedPublicKey <Vec<u8>>
+    unparsed: UnparsedPublicKey<Vec<u8>>,
 }
 
 impl Debug for PublicKey {
@@ -75,16 +79,20 @@ struct ResolverArgs {
     id: Vec<(Url, PublicKey)>,
 }
 
-use capbac::{Holder, CapBAC, Keypairs};
-use ring::signature::{EcdsaKeyPair, ECDSA_P256_SHA256_ASN1, ECDSA_P256_SHA256_ASN1_SIGNING, UnparsedPublicKey, KeyPair};
-use ring::error::KeyRejected;
-use std::fmt::{Debug, Formatter};
+use capbac::{CapBAC, Holder, Keypairs};
 use core::fmt;
+use openssl::nid::Nid;
+use openssl::pkey::{Private, Public};
+use ring::error::KeyRejected;
 use ring::rand::SystemRandom;
+use ring::signature::{
+    EcdsaKeyPair, KeyPair, UnparsedPublicKey, ECDSA_P256_SHA256_ASN1,
+    ECDSA_P256_SHA256_ASN1_SIGNING,
+};
+use std::fmt::{Debug, Formatter};
 
 impl Keypairs for HolderArgs {
     fn get(&self, id: &Url) -> Option<&EcdsaKeyPair> {
-
         if (self.me.eq(id)) {
             return Some(&self.sk);
         } else {
@@ -93,27 +101,63 @@ impl Keypairs for HolderArgs {
     }
 }
 
+fn read_sk() -> EcKey<Private> {
+    let path = Path::new("./key-me.pem");
+    let content = &read_file(&path).unwrap();
+    EcKey::private_key_from_pem(&content).unwrap()
+}
+
+fn read_pk() -> EcKey<Public> {
+    let path = Path::new("./key-me-pub.pem");
+    let pemContent = &read_file(&path).unwrap();
+
+    let pk = PKey::public_key_from_pem(pemContent).unwrap();
+    pk.ec_key().unwrap()
+
+    //    let public_key: Vec<u8> = vec![];
+    //    let group = EcGroup::from_curve_name(Nid::SECP256K1).unwrap();
+    //    let mut ctx = BigNumContext::new().unwrap();
+    //    let point = EcPoint::from_bytes(&group, &public_key, &mut ctx).unwrap();
+    //    EcKey::from_public_key(&group, &point).unwrap()
+}
+
 fn main() {
-    use CapBACApp::*;
-    let opt = CapBACApp::from_args();
-    println!("{:#?}", opt);
-    match opt {
-        Forge {
-            holder,
-            cert,
-            resolver,
-        } => {
-            let (id, key) = resolver.id.get(0).unwrap();
-            let message = "hoho".as_bytes();
-            let sign = holder.sk.sign(&SystemRandom::new(), message).unwrap();
+    let sk = read_sk();
+    let pk = read_pk();
 
-            let keyFromSK = UnparsedPublicKey::new(&ECDSA_P256_SHA256_ASN1, holder.sk.public_key().as_ref());
-            println!("Res: {:#?}", keyFromSK.verify(message, sign.as_ref()).unwrap());
-            println!("Res: {:#?}", key.unparsed.verify(message, sign.as_ref()).unwrap());
+    sk.check_key().unwrap();
+    pk.check_key().unwrap();
+    let msg = "hello!".as_bytes();
+    let sign = EcdsaSig::sign(&msg, &sk).unwrap().to_der().unwrap();
+    println!("{:?}", sign);
 
-//            let capbac = CapBAC::new(holder.into(), resolver.into());
-//            let holder = Holder::new(holder.me, capbac);
+    let res = EcdsaSig::from_der(&sign)
+        .unwrap()
+        .verify(&msg, &pk)
+        .unwrap();
+    println!("{}", res)
 
-        }
-    }
+    //    let key = EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_ASN1_SIGNING, &pem.contents).unwrap();
+    //    use CapBACApp::*;
+    //    let opt = CapBACApp::from_args();
+    //    println!("{:#?}", opt);
+    //    match opt {
+    //        Forge {
+    //            holder,
+    //            cert,
+    //            resolver,
+    //        } => {
+    //            let (id, key) = resolver.id.get(0).unwrap();
+    //            let message = "hoho".as_bytes();
+    //            let sign = holder.sk.sign(&SystemRandom::new(), message).unwrap();
+    //
+    //            let keyFromSK = UnparsedPublicKey::new(&ECDSA_P256_SHA256_ASN1, holder.sk.public_key().as_ref());
+    //            println!("Res: {:#?}", keyFromSK.verify(message, sign.as_ref()).unwrap());
+    //            println!("Res: {:#?}", key.unparsed.verify(message, sign.as_ref()).unwrap());
+    //
+    ////            let capbac = CapBAC::new(holder.into(), resolver.into());
+    ////            let holder = Holder::new(holder.me, capbac);
+    //
+    //        }
+    //    }
 }
