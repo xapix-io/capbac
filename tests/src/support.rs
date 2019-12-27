@@ -50,8 +50,8 @@ pub struct Actor {
 impl Actor {
     fn new(name: &str) -> Actor {
         let id = format!("http://{}.local/", name);
-        let sk_path = format!("./keys/{}.pem", name);
-        let pk_path = format!("./keys/{}-pub.pem", name);
+        let sk_path = format!("./keys/{}.pk8", name);
+        let pk_path = format!("./keys/{}-pub.der", name);
         let pk_mapping = format!("{}={}", id, pk_path);
         Actor {
             name: name.to_string(),
@@ -64,7 +64,7 @@ impl Actor {
 
     fn bad_new(name: &str, pk_path: &str) -> Actor {
         let id = format!("http://{}.local/", name);
-        let sk_path = format!("./keys/{}.pem", name);
+        let sk_path = format!("./keys/{}.pk8", name);
         let pk_mapping = format!("{}={}", id, pk_path);
         Actor {
             name: name.to_string(),
@@ -384,10 +384,10 @@ pub fn run(suite: Suite) {
                 "../java/cli/target/capbac-cli-1.0-SNAPSHOT.jar".to_string(),
             ],
         },
-        Impl {
-            cmd: "../rust/target/debug/capbac-cli".to_string(),
-            args: vec![],
-        },
+        // Impl {
+        //     cmd: "../rust/target/debug/capbac-cli".to_string(),
+        //     args: vec![],
+        // },
     ];
 
     for service_impl in &impls {

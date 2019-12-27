@@ -25,6 +25,7 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Date;
@@ -81,21 +82,13 @@ public class CapBACCli {
             }
         }
 
-        private byte[] parsePEM(Reader pem) throws IOException {
-            PemReader reader = new PemReader(pem);
-            PemObject pemObject = reader.readPemObject();
-            byte[] content = pemObject.getContent();
-            reader.close();
-            return content;
-        }
-
         @Override
         public ECPublicKey parse(byte[] content) {
             try {
                 KeyFactory kf = KeyFactory.getInstance("EC");
-                EncodedKeySpec keySpec = new X509EncodedKeySpec(parsePEM(new StringReader(new String(content))));
+                EncodedKeySpec keySpec = new X509EncodedKeySpec(content);
                 return (ECPublicKey) kf.generatePublic(keySpec);
-            } catch (InvalidKeySpecException | NoSuchAlgorithmException | IOException e) {
+            } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -112,18 +105,12 @@ public class CapBACCli {
             @Override
             public ECPrivateKey convert(String path) {
                 try {
-                    String content = readFileToString(new File(path), StandardCharsets.UTF_8);
-                    PEMParser pemParser = new PEMParser(new StringReader(content));
-                    PEMKeyPair pemKeyPair = null;
-                    pemKeyPair = (PEMKeyPair)pemParser.readObject();
+                    byte[] content = readFileToByteArray(new File(path));
+                    PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(content);
+                    KeyFactory factory = KeyFactory.getInstance("ECDSA");
 
-
-                    JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-                    KeyPair keyPair = converter.getKeyPair(pemKeyPair);
-                    pemParser.close();
-
-                    return (ECPrivateKey) keyPair.getPrivate();
-                } catch (IOException e) {
+                    return (ECPrivateKey) factory.generatePrivate(spec);
+                } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
                     throw new RuntimeException(e);
                 }
             }
