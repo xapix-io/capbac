@@ -1,18 +1,24 @@
+use ansi_term::Colour::{Green, Red};
 use duct;
-use std::rc::Rc;
 use itertools::Itertools;
-use std::io;
-use std::collections::HashMap;
 use snafu::{ResultExt, Snafu};
-use ansi_term::Colour::{Red, Green};
+use std::collections::HashMap;
+use std::io;
+use std::rc::Rc;
 
 struct Impl {
     cmd: String,
-    args: Vec<String>
+    args: Vec<String>,
 }
 
 impl Impl {
-    fn cmd(&self, stdin: Option<Rc<Container>>, args: &[&str], stdout: Option<Rc<Container>>, expected_exit_code: i32) -> Cmd {
+    fn cmd(
+        &self,
+        stdin: Option<Rc<Container>>,
+        args: &[&str],
+        stdout: Option<Rc<Container>>,
+        expected_exit_code: i32,
+    ) -> Cmd {
         let mut cmd_args = self.args.clone();
         for arg in args {
             cmd_args.push(arg.to_string());
@@ -22,7 +28,7 @@ impl Impl {
             stdout: stdout,
             cmd: self.cmd.clone(),
             args: cmd_args,
-            expected_exit_code
+            expected_exit_code,
         }
     }
 }
@@ -43,7 +49,7 @@ pub struct Actor {
 
 impl Actor {
     fn new(name: &str) -> Actor {
-        let id = format!("http://{}.local", name);
+        let id = format!("http://{}.local/", name);
         let sk_path = format!("./keys/{}.pem", name);
         let pk_path = format!("./keys/{}-pub.pem", name);
         let pk_mapping = format!("{}={}", id, pk_path);
@@ -52,12 +58,12 @@ impl Actor {
             id,
             sk_path,
             pk_path,
-            pk_mapping
+            pk_mapping,
         }
     }
 
     fn bad_new(name: &str, pk_path: &str) -> Actor {
-        let id = format!("http://{}.local", name);
+        let id = format!("http://{}.local/", name);
         let sk_path = format!("./keys/{}.pem", name);
         let pk_mapping = format!("{}={}", id, pk_path);
         Actor {
@@ -72,7 +78,7 @@ impl Actor {
 
 #[derive(Debug)]
 pub struct Container {
-    name: String
+    name: String,
 }
 
 #[derive(Debug)]
@@ -81,27 +87,24 @@ struct Cmd {
     stdout: Option<Rc<Container>>,
     cmd: String,
     args: Vec<String>,
-    expected_exit_code: i32
+    expected_exit_code: i32,
 }
 
 #[derive(Debug, Snafu)]
 enum CmdError<'a> {
     #[snafu(display("Error while executing {}: {}", command.as_shell(), source))]
-    ExecError {
-        command: &'a Cmd,
-        source: io::Error
-    },
+    ExecError { command: &'a Cmd, source: io::Error },
     #[snafu(display("Unexpected exit code for command {}. {} was expected, actual is {}", command.as_shell(), expected, actual))]
     UnexpectedExitCode {
         command: &'a Cmd,
         expected: i32,
-        actual: i32
-    }
+        actual: i32,
+    },
 }
 
 impl Cmd {
     fn as_shell(&self) -> String {
-        let args = self.args.iter().map(|x|  format!("'{}'", x)).join(" ");
+        let args = self.args.iter().map(|x| format!("'{}'", x)).join(" ");
 
         let mut cmd = String::new();
 
@@ -129,11 +132,14 @@ impl Cmd {
         cmd = cmd.stdout_capture();
         cmd = cmd.stderr_capture();
 
-        return cmd
+        return cmd;
     }
 
     fn exec(&self, data: &mut HashMap<String, Vec<u8>>) -> Result<(), CmdError> {
-        let res = self.to_duct(data).run().context(ExecError { command: self })?;
+        let res = self
+            .to_duct(data)
+            .run()
+            .context(ExecError { command: self })?;
         if let Some(ref c) = self.stdout {
             data.insert(c.name.clone(), res.stdout);
         }
@@ -169,16 +175,25 @@ pub struct ForgeBlueprint<'a> {
     capability: &'a str,
     subject: &'a ActorImpl<'a>,
     exp: Option<u64>,
-    with_holder_args: bool
+    with_holder_args: bool,
 }
 
-impl <'a> ForgeBlueprint<'a> {
+impl<'a> ForgeBlueprint<'a> {
     pub fn without_holder_args(self) -> Self {
-        Self { with_holder_args: false, ..self }
+        Self {
+            with_holder_args: false,
+            ..self
+        }
     }
 
     pub fn ok(self) -> (Ctx<'a>, Rc<Container>) {
-        let mut args= vec!["forge", "--capability", self.capability, "--subject", &self.subject.actor.id];
+        let mut args = vec![
+            "forge",
+            "--capability",
+            self.capability,
+            "--subject",
+            &self.subject.actor.id,
+        ];
         let exp_arg;
 
         if let Some(exp) = self.exp {
@@ -198,10 +213,12 @@ impl <'a> ForgeBlueprint<'a> {
         let mut ctx = self.target.ctx;
 
         let cert = ctx.new_container("cert");
-        ctx.commands.push(self.target.actor.implementation.cmd(
-            None,
-            &args,
-            Some(cert.clone()), 0));
+        ctx.commands.push(
+            self.target
+                .actor
+                .implementation
+                .cmd(None, &args, Some(cert.clone()), 0),
+        );
 
         (ctx, cert)
     }
@@ -211,13 +228,19 @@ pub struct CertValidateBlueprint<'a> {
     target: TargetBlueprint<'a>,
     cert: Rc<Container>,
     trust_regex: String,
-    pubs: Vec<&'a ActorImpl<'a>>
+    pubs: Vec<&'a ActorImpl<'a>>,
 }
 
-impl <'a> CertValidateBlueprint<'a> {
+impl<'a> CertValidateBlueprint<'a> {
     pub fn doit(self, exit_code: i32) -> Ctx<'a> {
         let now = self.target.ctx.now.to_string();
-        let mut args= vec!["certificate-validate", "--trust-ids", &self.trust_regex, "--now", &now];
+        let mut args = vec![
+            "certificate-validate",
+            "--trust-ids",
+            &self.trust_regex,
+            "--now",
+            &now,
+        ];
 
         for pk in self.pubs {
             args.push("--pub");
@@ -228,7 +251,9 @@ impl <'a> CertValidateBlueprint<'a> {
         ctx.commands.push(self.target.actor.implementation.cmd(
             Some(self.cert),
             &args,
-            None, exit_code));
+            None,
+            exit_code,
+        ));
 
         ctx
     }
@@ -239,25 +264,34 @@ impl <'a> CertValidateBlueprint<'a> {
 
 pub struct TargetBlueprint<'a> {
     ctx: Ctx<'a>,
-    actor: &'a ActorImpl<'a>
+    actor: &'a ActorImpl<'a>,
 }
 
-impl <'a> TargetBlueprint<'a> {
-    pub fn forge(self, capability: &'a str, subject: &'a ActorImpl, exp: Option<u64>) -> ForgeBlueprint<'a> {
+impl<'a> TargetBlueprint<'a> {
+    pub fn forge(
+        self,
+        capability: &'a str,
+        subject: &'a ActorImpl,
+        exp: Option<u64>,
+    ) -> ForgeBlueprint<'a> {
         ForgeBlueprint {
             target: self,
             capability,
             subject,
             with_holder_args: true,
-            exp
+            exp,
         }
     }
-    pub fn cert_validate(self, cert: &Rc<Container>, pubs: Vec<&'a ActorImpl>) -> CertValidateBlueprint<'a> {
+    pub fn cert_validate(
+        self,
+        cert: &Rc<Container>,
+        pubs: Vec<&'a ActorImpl>,
+    ) -> CertValidateBlueprint<'a> {
         CertValidateBlueprint {
             target: self,
             cert: cert.clone(),
             trust_regex: ".*".to_string(),
-            pubs: pubs
+            pubs: pubs,
         }
     }
 }
@@ -265,31 +299,22 @@ impl <'a> TargetBlueprint<'a> {
 impl<'a> Ctx<'a> {
     pub fn service(self) -> TargetBlueprint<'a> {
         let actor = &self.system.service;
-        TargetBlueprint {
-            ctx: self,
-            actor
-        }
+        TargetBlueprint { ctx: self, actor }
     }
 
     pub fn alice(self) -> TargetBlueprint<'a> {
         let actor = &self.system.alice;
-        TargetBlueprint {
-            ctx: self,
-            actor
-        }
+        TargetBlueprint { ctx: self, actor }
     }
     pub fn bob(self) -> TargetBlueprint<'a> {
         let actor = &self.system.bob;
-        TargetBlueprint {
-            ctx: self,
-            actor
-        }
+        TargetBlueprint { ctx: self, actor }
     }
 
     fn new_container(&mut self, prefix: &str) -> Rc<Container> {
         self.container_counter += 1;
         Rc::new(Container {
-            name: format!("{}{}", prefix, self.container_counter)
+            name: format!("{}{}", prefix, self.container_counter),
         })
     }
 
@@ -303,50 +328,73 @@ impl<'a> Ctx<'a> {
     }
 }
 
-pub fn run(suite: &[fn(Ctx) -> Ctx]) {
-    let java = Impl {
-        cmd: "java".to_string(),
-        args: vec!["-jar".to_string(), "../java/cli/target/capbac-cli-1.0-SNAPSHOT.jar".to_string()]
-    };
+pub type Suite<'a> = &'a [fn(Ctx) -> Ctx];
+
+fn run_system(suite: &Suite, service_impl: &Impl, alice_impl: &Impl, bob_impl: &Impl) {
     let service_actor = Actor::new("service");
     let alice_actor = Actor::new("alice");
     let bob_actor = Actor::new("bob");
     let service = ActorImpl {
         actor: &service_actor,
-        implementation: &java
+        implementation: service_impl,
     };
     let alice = ActorImpl {
         actor: &alice_actor,
-        implementation: &java
+        implementation: alice_impl,
     };
     let bob = ActorImpl {
         actor: &bob_actor,
-        implementation: &java
+        implementation: bob_impl,
     };
 
     let bad_alice_actor = Actor::bad_new("alice", &bob_actor.pk_path);
 
     let system = System {
-        service, alice, bob,
+        service,
+        alice,
+        bob,
         bad_alice: ActorImpl {
             actor: &bad_alice_actor,
-            implementation: &java
-        }
+            implementation: alice_impl,
+        },
     };
 
-    for case in suite {
+    for case in *suite {
         let ctx = Ctx {
             system: &system,
             commands: vec![],
             container_counter: 0,
-            now: 0
+            now: 0,
         };
 
         let ctx = case(ctx);
         match ctx.run() {
-            Ok(()) => { println!("[{}]", Green.paint("SUCESS")) }
-            Err(err) => { println!("[{}]: {}", Red.paint("ERROR"), err) }
+            Ok(()) => println!("[{}]", Green.paint("SUCESS")),
+            Err(err) => println!("[{}]: {}", Red.paint("ERROR"), err),
         }
+    }
+}
 
+pub fn run(suite: Suite) {
+    let impls = [
+        Impl {
+            cmd: "java".to_string(),
+            args: vec![
+                "-jar".to_string(),
+                "../java/cli/target/capbac-cli-1.0-SNAPSHOT.jar".to_string(),
+            ],
+        },
+        Impl {
+            cmd: "../rust/target/debug/capbac-cli".to_string(),
+            args: vec![],
+        },
+    ];
+
+    for service_impl in &impls {
+        for alice_impl in &impls {
+            for bob_impl in &impls {
+                run_system(&suite, service_impl, alice_impl, bob_impl)
+            }
+        }
     }
 }

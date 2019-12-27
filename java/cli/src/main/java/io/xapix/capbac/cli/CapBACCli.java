@@ -228,22 +228,20 @@ public class CapBACCli {
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } catch (CapBAC.Malformed malformed) {
-            System.err.println("Malformed data");
-            malformed.getCause().printStackTrace();
+        } catch (CapBAC.Malformed e) {
+            System.err.println(e.toString());
             System.exit(11);
-        } catch (CapBAC.BadID badID) {
-            System.err.println("Bad ID");
-            badID.getCause().printStackTrace();
+        } catch (CapBAC.BadID e) {
+            System.err.println(e.toString());
             System.exit(12);
-        } catch (CapBAC.Invalid invalid) {
-            System.err.println("Invalid data");
+        } catch (CapBAC.Invalid e) {
+            System.err.println(e.toString());
             System.exit(13);
-        } catch (CapBAC.Expired expired) {
-            System.err.println("Expired certificate");
+        } catch (CapBAC.Expired e) {
+            System.err.println(e.toString());
             System.exit(14);
-        } catch (CapBAC.BadSign badSign) {
-            System.err.println("Bad sign");
+        } catch (CapBAC.BadSign e) {
+            System.err.println(e.toString());
             System.exit(15);
         }
     }

@@ -1,2 +1,2 @@
-mod capbac;
+pub mod capbac;
 pub use capbac::*;
