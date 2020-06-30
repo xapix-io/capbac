@@ -1,4 +1,7 @@
 /lib/target/
 /lib/.idea/
+/cli/target/
+/cli/.idea/
 /.idea/
 *.iml
+**/dependency-reduced-pom.xml
