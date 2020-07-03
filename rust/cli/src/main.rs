@@ -18,16 +18,14 @@ fn parse_id_pair(s: &str) -> Result<(Url, EcKey<Public>), Box<dyn Error>> {
         .find('=')
         .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{}`", s))?;
     let path: PathBuf = s[pos + 1..].parse()?;
-    let pemContent = &read_file(&path).unwrap();
+    let pem_content = &read_file(&path).unwrap();
 
-    let pk = PKey::public_key_from_pem(pemContent).unwrap();
+    let pk = PKey::public_key_from_pem(pem_content).unwrap();
 
     Ok((s[..pos].parse()?, pk.ec_key()?))
 }
 
 fn read_file(path: &std::path::Path) -> Result<Vec<u8>, Box<dyn Error>> {
-    use std::io::Read;
-
     let mut file = std::fs::File::open(path)?;
     let mut contents: Vec<u8> = Vec::new();
     file.read_to_end(&mut contents)?;

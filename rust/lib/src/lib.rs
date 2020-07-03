@@ -2,9 +2,8 @@ use openssl::ec::EcKey;
 use openssl::ecdsa::EcdsaSig;
 use openssl::error::ErrorStack;
 use openssl::pkey::{Private, Public};
-use protobuf::{CodedInputStream, Message};
-use sha2::{Digest, Sha256, Sha512};
-use std::rc::Rc;
+use protobuf::{Message};
+use sha2::{Digest, Sha256};
 use thiserror::Error;
 use url::Url;
 
