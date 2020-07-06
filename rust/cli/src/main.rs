@@ -18,11 +18,8 @@ fn parse_id_pair(s: &str) -> Result<(Url, EcKey<Public>), Box<dyn Error>> {
         .find('=')
         .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{}`", s))?;
     let path: PathBuf = s[pos + 1..].parse()?;
-    let pem_content = &read_file(&path).unwrap();
-
-    let pk = PKey::public_key_from_pem(pem_content).unwrap();
-
-    Ok((s[..pos].parse()?, pk.ec_key()?))
+    let der_content = &read_file(&path)?;
+    Ok((s[..pos].parse()?, PKey::public_key_from_der(der_content)?.ec_key()?))
 }
 
 fn read_file(path: &std::path::Path) -> Result<Vec<u8>, Box<dyn Error>> {
@@ -35,7 +32,7 @@ fn read_file(path: &std::path::Path) -> Result<Vec<u8>, Box<dyn Error>> {
 fn parse_priv_key(s: &str) -> Result<EcKey<Private>, Box<dyn Error>> {
     let path = Path::new(s);
     let content = &read_file(&path)?;
-    Ok(EcKey::private_key_from_pem(&content)?)
+    Ok(PKey::private_key_from_pkcs8(content)?.ec_key()?)
 }
 
 #[derive(StructOpt, Debug)]
