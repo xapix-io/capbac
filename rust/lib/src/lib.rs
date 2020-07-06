@@ -1,3 +1,11 @@
+// #[cfg(feature = "with-serde")]
+// extern crate serde;
+// #[cfg(feature = "with-serde")]
+// #[macro_use]
+// extern crate serde_derive;
+// #[cfg(feature = "with-serde")]
+// extern crate serde_json;
+
 use openssl::ec::EcKey;
 use openssl::ecdsa::EcdsaSig;
 use openssl::error::ErrorStack;

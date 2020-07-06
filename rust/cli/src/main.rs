@@ -46,12 +46,14 @@ fn read_cert(cert: &mut capbac::proto::Certificate) -> &capbac::proto::Certifica
 fn print_cert(cert: &capbac::proto::Certificate) {
     let mut payload = capbac::proto::Certificate_Payload::new();
     payload.merge_from_bytes(cert.get_payload()).unwrap();
-    println!("-- SIG         : {:?}", base64::encode(cert.get_signature()));
+    println!("-- SIGNATURE   : {:?}", base64::encode(cert.get_signature()));
     println!("-- PAYLOAD     : {:?}", base64::encode(cert.get_payload()));
     println!("--- capability : {:?}", base64::encode(payload.get_capability()));
     println!("--- issuer     : {:?}", payload.get_issuer());
     println!("--- subject    : {:?}", payload.get_issuer());
-    println!("--- exp        : {:?}", payload.get_expiration());
+    if payload.get_expiration() > 0 {
+        println!("--- exp        : {:?}", payload.get_expiration());
+    }
     if payload.has_parent() {
         print_cert(payload.get_parent());
     }
