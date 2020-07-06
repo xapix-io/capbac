@@ -12,6 +12,7 @@ use std::process::exit;
 use structopt::StructOpt;
 use url::Url;
 use Result::Err;
+use base64;
 
 fn parse_id_pair(s: &str) -> Result<(Url, EcKey<Public>), Box<dyn Error>> {
     let pos = s
@@ -42,6 +43,20 @@ fn read_cert(cert: &mut capbac::proto::Certificate) -> &capbac::proto::Certifica
     return cert
 }
 
+fn print_cert(cert: &capbac::proto::Certificate) {
+    let mut payload = capbac::proto::Certificate_Payload::new();
+    payload.merge_from_bytes(cert.get_payload()).unwrap();
+    println!("-- SIG         : {:?}", base64::encode(cert.get_signature()));
+    println!("-- PAYLOAD     : {:?}", base64::encode(cert.get_payload()));
+    println!("--- capability : {:?}", base64::encode(payload.get_capability()));
+    println!("--- issuer     : {:?}", payload.get_issuer());
+    println!("--- subject    : {:?}", payload.get_issuer());
+    println!("--- exp        : {:?}", payload.get_expiration());
+    if payload.has_parent() {
+        print_cert(payload.get_parent());
+    }
+}
+
 #[derive(StructOpt, Debug)]
 enum CapBACApp {
     Forge {
@@ -49,6 +64,31 @@ enum CapBACApp {
         holder: HolderArgs,
         #[structopt(flatten)]
         cert: CertArgs,
+    },
+
+    Delegate {
+        #[structopt(flatten)]
+        holder: HolderArgs,
+        #[structopt(flatten)]
+        cert: CertArgs
+    },
+
+    Invoke {
+        #[structopt(flatten)]
+        holder: HolderArgs,
+        #[structopt(flatten)]
+        invoke: InvokeArgs
+    },
+
+    Invocation {
+
+    },
+
+    InvocationValidate {
+        #[structopt(flatten)]
+        pubs: PubsArgs,
+        #[structopt(flatten)]
+        validate: ValidateArgs
     },
 
     Certificate {
@@ -59,7 +99,7 @@ enum CapBACApp {
         #[structopt(flatten)]
         pubs: PubsArgs,
         #[structopt(flatten)]
-        validate: ValidateArgs,
+        validate: ValidateArgs
     },
 }
 
@@ -87,6 +127,11 @@ struct ValidateArgs {
     now: u64,
     #[structopt(long)]
     trust_ids: Regex,
+}
+
+#[derive(StructOpt, Debug)]
+struct InvokeArgs {
+
 }
 
 impl capbac::TrustChecker for ValidateArgs {
@@ -127,10 +172,20 @@ fn main() {
                 .unwrap();
             stdout().write(&cert.write_to_bytes().unwrap()).unwrap();
         }
+        Delegate { holder, cert } => {
+
+        }
+        Invoke { holder, invoke } => {
+
+        }
+        Invocation { } => {}
+        InvocationValidate { validate, pubs } => {
+
+        }
         Certificate { } => {
             let mut cert = capbac::proto::Certificate::new();
             read_cert(&mut cert);
-            stdout().write(protobuf::text_format::print_to_string(&cert).as_bytes()).unwrap();
+            print_cert(&cert);
         }
         CertificateValidate { validate, pubs } => {
             let mut cert = capbac::proto::Certificate::new();

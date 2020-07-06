@@ -32,6 +32,9 @@ pub enum ForgeError {
     },
 }
 
+#[derive(Error, Debug)]
+pub enum InvokeError {}
+
 pub struct Holder<'a> {
     me: Url,
     sk: &'a EcKey<Private>,
@@ -60,6 +63,12 @@ impl<'a> Holder<'a> {
         proto.set_payload(bytes);
         Ok(proto)
     }
+
+    // pub fn delegate(&self, cert: proto::Certificate, options: CertificateBlueprint) -> Result<proto::Certificate, InvokeError> {
+
+    // }
+
+    // pub fn invoke(&self, )
 
     fn sign(&self, msg: &Vec<u8>) -> Result<Vec<u8>, ForgeError> {
         let mut hasher = Sha256::new();
