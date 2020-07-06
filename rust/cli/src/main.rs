@@ -35,6 +35,13 @@ fn parse_priv_key(s: &str) -> Result<EcKey<Private>, Box<dyn Error>> {
     Ok(PKey::private_key_from_pkcs8(content)?.ec_key()?)
 }
 
+fn read_cert(cert: &mut capbac::proto::Certificate) -> &capbac::proto::Certificate {
+    let mut buf = Vec::new();
+    stdin().read_to_end(&mut buf).unwrap();
+    cert.merge_from_bytes(&buf).unwrap();
+    return cert
+}
+
 #[derive(StructOpt, Debug)]
 enum CapBACApp {
     Forge {
@@ -42,6 +49,10 @@ enum CapBACApp {
         holder: HolderArgs,
         #[structopt(flatten)]
         cert: CertArgs,
+    },
+
+    Certificate {
+
     },
 
     CertificateValidate {
@@ -116,11 +127,14 @@ fn main() {
                 .unwrap();
             stdout().write(&cert.write_to_bytes().unwrap()).unwrap();
         }
+        Certificate { } => {
+            let mut cert = capbac::proto::Certificate::new();
+            read_cert(&mut cert);
+            stdout().write(protobuf::text_format::print_to_string(&cert).as_bytes()).unwrap();
+        }
         CertificateValidate { validate, pubs } => {
             let mut cert = capbac::proto::Certificate::new();
-            let mut buf = Vec::new();
-            stdin().read_to_end(&mut buf).unwrap();
-            cert.merge_from_bytes(&buf).unwrap();
+            read_cert(&mut cert);
             match capbac::Validator::new(&validate, &pubs).validate_cert(&cert, validate.now) {
                 Result::Ok(_) => (),
                 Err(e @ ValidateError::Malformed { .. }) => {
