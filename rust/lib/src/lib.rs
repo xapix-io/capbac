@@ -28,7 +28,7 @@ pub trait TrustChecker {
 pub struct CertificateBlueprint {
     pub subject: Url,
     pub capability: Vec<u8>,
-    pub exp: Option<u64>,
+    pub exp: Option<u64>
 }
 
 #[derive(Error, Debug)]
@@ -38,6 +38,15 @@ pub enum ForgeError {
         #[from]
         source: ErrorStack,
     },
+}
+
+#[derive(Error, Debug)]
+pub enum DelegateError {
+    #[error("Unexpected OpenSSL error. Invalid private key?")]
+    CryptoError {
+        #[from]
+        source: ErrorStack,
+    }
 }
 
 #[derive(Error, Debug)]
@@ -55,6 +64,27 @@ impl<'a> Holder<'a> {
 
     pub fn forge(&self, options: CertificateBlueprint) -> Result<proto::Certificate, ForgeError> {
         let mut proto_payload = proto::Certificate_Payload::new();
+        self.write_payload(&mut proto_payload, options)?;
+        let proto = self.write_cert(proto_payload)?;
+        Ok(proto)
+    }
+
+    pub fn delegate(&self, cert: proto::Certificate, options: CertificateBlueprint) -> Result<proto::Certificate, DelegateError> {
+        let mut proto_payload = proto::Certificate_Payload::new();
+        self.write_payload(&mut proto_payload, options)?;
+        proto_payload.set_parent(cert);
+        let proto = self.write_cert(proto_payload)?;
+        Ok(proto)
+    }
+
+    fn sign(&self, msg: &Vec<u8>) -> Result<Vec<u8>, ErrorStack> {
+        let mut hasher = Sha256::new();
+        hasher.input(msg);
+        let hash = hasher.result();
+        Ok(EcdsaSig::sign(&hash, &self.sk)?.to_der()?)
+    }
+
+    fn write_payload(&self, proto_payload: &mut proto::Certificate_Payload, options: CertificateBlueprint) -> Result<(), ErrorStack> {
         proto_payload.set_capability(options.capability);
         match options.exp {
             Some(x) => proto_payload.set_expiration(x),
@@ -62,6 +92,10 @@ impl<'a> Holder<'a> {
         }
         proto_payload.set_issuer(self.me.clone().into_string());
         proto_payload.set_subject(options.subject.to_string());
+        Ok(())
+    }
+
+    fn write_cert(&self, proto_payload: proto::Certificate_Payload) -> Result<proto::Certificate, ErrorStack> {
         let bytes = proto_payload
             .write_to_bytes()
             .expect("Protobuf internal error");
@@ -70,19 +104,6 @@ impl<'a> Holder<'a> {
         proto.set_signature(self.sign(&bytes)?);
         proto.set_payload(bytes);
         Ok(proto)
-    }
-
-    // pub fn delegate(&self, cert: proto::Certificate, options: CertificateBlueprint) -> Result<proto::Certificate, InvokeError> {
-
-    // }
-
-    // pub fn invoke(&self, )
-
-    fn sign(&self, msg: &Vec<u8>) -> Result<Vec<u8>, ForgeError> {
-        let mut hasher = Sha256::new();
-        hasher.input(msg);
-        let hash = hasher.result();
-        Ok(EcdsaSig::sign(&hash, &self.sk)?.to_der()?)
     }
 }
 

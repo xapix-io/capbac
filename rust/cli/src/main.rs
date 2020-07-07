@@ -50,7 +50,7 @@ fn print_cert(cert: &capbac::proto::Certificate) {
     println!("-- PAYLOAD     : {:?}", base64::encode(cert.get_payload()));
     println!("--- capability : {:?}", base64::encode(payload.get_capability()));
     println!("--- issuer     : {:?}", payload.get_issuer());
-    println!("--- subject    : {:?}", payload.get_issuer());
+    println!("--- subject    : {:?}", payload.get_subject());
     if payload.get_expiration() > 0 {
         println!("--- exp        : {:?}", payload.get_expiration());
     }
@@ -147,7 +147,7 @@ impl Into<capbac::CertificateBlueprint> for CertArgs {
         capbac::CertificateBlueprint {
             subject: self.subject,
             capability: self.capability.as_bytes().to_vec(),
-            exp: self.exp,
+            exp: self.exp
         }
     }
 }
@@ -175,7 +175,12 @@ fn main() {
             stdout().write(&cert.write_to_bytes().unwrap()).unwrap();
         }
         Delegate { holder, cert } => {
-
+            let mut parent_cert = capbac::proto::Certificate::new();
+            read_cert(&mut parent_cert);
+            let cert = capbac::Holder::new(holder.me, &holder.sk)
+                .delegate(parent_cert, cert.into())
+                .unwrap();
+            stdout().write(&cert.write_to_bytes().unwrap()).unwrap();
         }
         Invoke { holder, invoke } => {
 

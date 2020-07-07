@@ -224,6 +224,52 @@ impl<'a> ForgeBlueprint<'a> {
     }
 }
 
+pub struct DelegateBlueprint<'a> {
+    target: TargetBlueprint<'a>,
+    cert: Rc<Container>,
+    capability: &'a str,
+    subject: &'a ActorImpl<'a>,
+    exp: Option<u64>,
+    with_holder_args: bool,
+}
+
+impl<'a> DelegateBlueprint<'a> {
+    pub fn ok(self) -> (Ctx<'a>, Rc<Container>) {
+        let mut args = vec![
+            "delegate",
+            "--capability",
+            self.capability,
+            "--subject",
+            &self.subject.actor.id
+        ];
+        let exp_arg;
+        if let Some(exp) = self.exp {
+            exp_arg = exp.to_string();
+            args.push("--exp");
+            args.push(&exp_arg)
+        }
+
+        if self.with_holder_args {
+            args.push("--me");
+            args.push(&self.target.actor.actor.id);
+
+            args.push("--sk");
+            args.push(&self.target.actor.actor.sk_path)
+        }
+
+        let mut ctx = self.target.ctx;
+
+        let cert = ctx.new_container("cert");
+        ctx.commands.push(self.target.actor.implementation.cmd(
+            Some(self.cert.clone()),
+            &args,
+            Some(cert.clone()),
+            0));
+
+        (ctx, cert)
+    }
+}
+
 pub struct CertValidateBlueprint<'a> {
     target: TargetBlueprint<'a>,
     cert: Rc<Container>,
@@ -280,6 +326,22 @@ impl<'a> TargetBlueprint<'a> {
             subject,
             with_holder_args: true,
             exp,
+        }
+    }
+    pub fn delegate(
+        self,
+        cert: &Rc<Container>,
+        capability: &'a str,
+        subject: &'a ActorImpl,
+        exp: Option<u64>
+    ) -> DelegateBlueprint<'a> {
+        DelegateBlueprint {
+            target: self,
+            cert: cert.clone(),
+            capability,
+            subject,
+            with_holder_args: true,
+            exp
         }
     }
     pub fn cert_validate(

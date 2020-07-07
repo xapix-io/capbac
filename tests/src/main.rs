@@ -31,46 +31,27 @@ fn wrong_cert_sign(ctx: Ctx) -> Ctx {
         .doit(15)
 }
 
+fn cert_delegate_validation(ctx: Ctx) -> Ctx {
+    let service = &ctx.system.service;
+    let alice = &ctx.system.alice;
+    let bob = &ctx.system.bob;
+    let bad_alice = &ctx.system.bad_alice;
+    let (ctx, cert) = ctx.service().forge("everything", bob, None).ok();
+    let (ctx, cert) = ctx.bob().delegate(&cert, "not everything", alice, None).ok();
+    ctx.alice()
+        .cert_validate(&cert, vec![&service, &bob])
+        .ok()
+        .alice()
+        .cert_validate(&cert, vec![&service, &bad_alice])
+        .doit(12)
+}
+
 fn main() {
     let suite: Suite = &[
         basic_cert_validation,
         no_pub_cert_validation,
         wrong_cert_sign,
+        cert_delegate_validation
     ];
     run(suite)
 }
-
-//struct A {}
-//
-//struct B<'a> {
-//    a: &'a A
-//}
-//
-//struct C<'a> {
-//    b: B<'a>
-//}
-//
-//impl <'a> B<'a> {
-//    fn foo(self) -> C<'a> {
-//        C { b: self }
-//    }
-//
-//    fn bar(self) {
-//
-//    }
-//}
-//
-//
-//fn main() {
-//    let a = A {
-//    };
-//
-//    {
-//        let mut b = B { a: &a };
-//
-//        let b = b.foo().b;
-//        b.bar();
-//    }
-//
-//
-//}
