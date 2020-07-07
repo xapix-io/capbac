@@ -34,16 +34,26 @@ fn wrong_cert_sign(ctx: Ctx) -> Ctx {
 fn cert_delegate_validation(ctx: Ctx) -> Ctx {
     let service = &ctx.system.service;
     let alice = &ctx.system.alice;
-    let bob = &ctx.system.bob;
-    let bad_alice = &ctx.system.bad_alice;
-    let (ctx, cert) = ctx.service().forge("everything", bob, None).ok();
-    let (ctx, cert) = ctx.bob().delegate(&cert, "not everything", alice, None).ok();
+    let (ctx, cert) = ctx.service().forge("everything", service, None).ok();
+    let (ctx, cert) = ctx.service().delegate(&cert, "not everything", alice, None).ok();
     ctx.alice()
-        .cert_validate(&cert, vec![&service, &bob])
+        .cert_validate(&cert, vec![&service])
         .ok()
         .alice()
-        .cert_validate(&cert, vec![&service, &bad_alice])
+        .cert_validate(&cert, vec![])
         .doit(12)
+}
+
+fn broken_chain(ctx: Ctx) -> Ctx {
+    let service = &ctx.system.service;
+    let alice = &ctx.system.alice;
+    let bob = &ctx.system.bob;
+    let (ctx, cert) = ctx.service().forge("everything", service, None).ok();
+    let (ctx, cert) = ctx.service().delegate(&cert, "not everything", alice, None).ok();
+    let (ctx, cert) = ctx.bob().delegate(&cert, "everything", bob, None).ok();
+    ctx.bob()
+        .cert_validate(&cert, vec![&service, &alice])
+        .doit(13)
 }
 
 fn main() {
@@ -51,7 +61,8 @@ fn main() {
         basic_cert_validation,
         no_pub_cert_validation,
         wrong_cert_sign,
-        cert_delegate_validation
+        cert_delegate_validation,
+        broken_chain
     ];
     run(suite)
 }

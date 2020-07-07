@@ -179,12 +179,12 @@ pub struct ForgeBlueprint<'a> {
 }
 
 impl<'a> ForgeBlueprint<'a> {
-    pub fn without_holder_args(self) -> Self {
-        Self {
-            with_holder_args: false,
-            ..self
-        }
-    }
+    // pub fn without_holder_args(self) -> Self {
+    //     Self {
+    //         with_holder_args: false,
+    //         ..self
+    //     }
+    // }
 
     pub fn ok(self) -> (Ctx<'a>, Rc<Container>) {
         let mut args = vec![
@@ -368,10 +368,16 @@ impl<'a> Ctx<'a> {
         let actor = &self.system.alice;
         TargetBlueprint { ctx: self, actor }
     }
+
     pub fn bob(self) -> TargetBlueprint<'a> {
         let actor = &self.system.bob;
         TargetBlueprint { ctx: self, actor }
     }
+
+    // pub fn bad_alice(self) -> TargetBlueprint<'a> {
+    //     let actor = &self.system.bad_alice;
+    //     TargetBlueprint {ctx: self, actor}
+    // }
 
     fn new_container(&mut self, prefix: &str) -> Rc<Container> {
         self.container_counter += 1;
