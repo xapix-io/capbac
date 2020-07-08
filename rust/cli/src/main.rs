@@ -12,6 +12,8 @@ use std::process::exit;
 use structopt::StructOpt;
 use url::Url;
 use Result::Err;
+use base64;
+use serde::{Serialize, Deserialize};
 
 fn parse_id_pair(s: &str) -> Result<(Url, EcKey<Public>), Box<dyn Error>> {
     let pos = s
@@ -50,10 +52,100 @@ fn read_from_stdin<T: protobuf::Message>(proto: &mut T) -> &T {
     proto
 }
 
-fn print_cert(_cert: &capbac::proto::Certificate) {
+#[derive(Serialize, Deserialize, Debug)]
+struct JsonCertificate<'a> {
+    payload: &'a str,
+    signature: &'a str,
 }
 
-fn print_invocation(_invocation: &capbac::proto::Invocation) {
+#[derive(Serialize, Deserialize, Debug)]
+struct JsonCertPayload<'a> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    parent: Option<JsonCertificate<'a>>,
+    capability: &'a str,
+    issuer: &'a str,
+    subject: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    expiration: Option<u64>
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct JsonInvocation<'a> {
+    payload: &'a str,
+    signature: &'a str,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct JsonInvocationPayload<'a> {
+    certificate: JsonCertificate<'a>,
+    invoker: &'a str,
+    action: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    expiration: Option<u64>
+}
+
+fn print_cert(cert: &capbac::proto::Certificate) {
+    let json_cert = JsonCertificate {
+        payload: &base64::encode(cert.get_payload()),
+        signature: &base64::encode(cert.get_signature())
+    };
+    let mut payload = capbac::proto::Certificate_Payload::new();
+    payload.merge_from_bytes(cert.get_payload()).unwrap();
+    let parent_cert = payload.get_parent();
+    let parent_cert = JsonCertificate {
+        payload: &base64::encode(parent_cert.get_payload()),
+        signature: &base64::encode(parent_cert.get_signature())
+    };
+    let parent_payload = if payload.has_parent() {
+        Some(parent_cert)
+    } else {
+        None
+    };
+    let exp = if payload.get_expiration() != 0 {
+        Some(payload.get_expiration())
+    } else {
+        None
+    };
+    let json_cert_payload = JsonCertPayload {
+        parent: parent_payload,
+        capability: &base64::encode(payload.get_capability()),
+        issuer: payload.get_issuer(),
+        subject: payload.get_subject(),
+        expiration: exp
+    };
+    println!("{}", serde_json::to_string_pretty(&json_cert).unwrap());
+    println!("{}", serde_json::to_string_pretty(&json_cert_payload).unwrap());
+    if payload.has_parent() {
+        print_cert(payload.get_parent());
+    }
+}
+
+fn print_invocation(invocation: &capbac::proto::Invocation) {
+    let json_inv = JsonInvocation {
+        payload: &base64::encode(invocation.get_payload()),
+        signature: &base64::encode(invocation.get_signature())
+    };
+    let mut payload = capbac::proto::Invocation_Payload::new();
+    payload.merge_from_bytes(invocation.get_payload()).unwrap();
+    let cert = payload.get_certificate();
+    let json_cert = JsonCertificate {
+        payload: &base64::encode(cert.get_payload()),
+        signature: &base64::encode(cert.get_signature())
+    };
+    let exp = if payload.get_expiration() != 0 {
+        Some(payload.get_expiration())
+    } else {
+        None
+    };
+    let json_inv_payload = JsonInvocationPayload {
+        certificate: json_cert,
+        invoker: payload.get_invoker(),
+        action: &base64::encode(payload.get_action()),
+        expiration: exp
+    };
+    println!("{}", serde_json::to_string_pretty(&json_inv).unwrap());
+    println!("{}", serde_json::to_string_pretty(&json_inv_payload).unwrap());
+    print_cert(cert);
 }
 
 #[derive(StructOpt, Debug)]
