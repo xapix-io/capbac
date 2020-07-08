@@ -36,27 +36,25 @@ fn parse_priv_key(s: &str) -> Result<EcKey<Private>, Box<dyn Error>> {
     Ok(PKey::private_key_from_pkcs8(content)?.ec_key()?)
 }
 
-fn read_cert(cert: &mut capbac::proto::Certificate) -> &capbac::proto::Certificate {
-    let mut buf = Vec::new();
-    stdin().read_to_end(&mut buf).unwrap();
-    cert.merge_from_bytes(&buf).unwrap();
-    return cert
+fn parse_cert(s: &str) -> Result<capbac::proto::Certificate, Box<dyn Error>> {
+    let path = Path::new(s);
+    let content = &read_file(&path)?;
+    let mut cert = capbac::proto::Certificate::new();
+    cert.merge_from_bytes(&content)?;
+    Ok(cert)
 }
 
-fn print_cert(cert: &capbac::proto::Certificate) {
-    let mut payload = capbac::proto::Certificate_Payload::new();
-    payload.merge_from_bytes(cert.get_payload()).unwrap();
-    println!("-- SIGNATURE   : {:?}", base64::encode(cert.get_signature()));
-    println!("-- PAYLOAD     : {:?}", base64::encode(cert.get_payload()));
-    println!("--- capability : {:?}", base64::encode(payload.get_capability()));
-    println!("--- issuer     : {:?}", payload.get_issuer());
-    println!("--- subject    : {:?}", payload.get_subject());
-    if payload.get_expiration() > 0 {
-        println!("--- exp        : {:?}", payload.get_expiration());
-    }
-    if payload.has_parent() {
-        print_cert(payload.get_parent());
-    }
+fn read_from_stdin<T: protobuf::Message>(proto: &mut T) -> &T {
+    let mut buf = Vec::new();
+    stdin().read_to_end(&mut buf).unwrap();
+    proto.merge_from_bytes(&buf).unwrap();
+    proto
+}
+
+fn print_cert(_cert: &capbac::proto::Certificate) {
+}
+
+fn print_invocation(_invocation: &capbac::proto::Invocation) {
 }
 
 #[derive(StructOpt, Debug)]
@@ -133,7 +131,12 @@ struct ValidateArgs {
 
 #[derive(StructOpt, Debug)]
 struct InvokeArgs {
-
+    #[structopt(long)]
+    action: String,
+    #[structopt(long, parse(try_from_str = parse_cert))]
+    cert: capbac::proto::Certificate,
+    #[structopt(long)]
+    exp: Option<u64>,
 }
 
 impl capbac::TrustChecker for ValidateArgs {
@@ -147,6 +150,16 @@ impl Into<capbac::CertificateBlueprint> for CertArgs {
         capbac::CertificateBlueprint {
             subject: self.subject,
             capability: self.capability.as_bytes().to_vec(),
+            exp: self.exp
+        }
+    }
+}
+
+impl Into<capbac::InvokeBlueprint> for InvokeArgs {
+    fn into(self) -> capbac::InvokeBlueprint {
+        capbac::InvokeBlueprint {
+            action: self.action.as_bytes().to_vec(),
+            cert: self.cert,
             exp: self.exp
         }
     }
@@ -176,27 +189,34 @@ fn main() {
         }
         Delegate { holder, cert } => {
             let mut parent_cert = capbac::proto::Certificate::new();
-            read_cert(&mut parent_cert);
+            read_from_stdin(&mut parent_cert);
             let cert = capbac::Holder::new(holder.me, &holder.sk)
                 .delegate(parent_cert, cert.into())
                 .unwrap();
             stdout().write(&cert.write_to_bytes().unwrap()).unwrap();
         }
         Invoke { holder, invoke } => {
-
+            let invocation = capbac::Holder::new(holder.me, &holder.sk)
+                .invoke(invoke.into())
+                .unwrap();
+            stdout().write(&invocation.write_to_bytes().unwrap()).unwrap();
         }
-        Invocation { } => {}
+        Invocation { } => {
+            let mut invocation = capbac::proto::Invocation::new();
+            read_from_stdin(&mut invocation);
+            print_invocation(&invocation);
+        }
         InvocationValidate { validate, pubs } => {
 
         }
         Certificate { } => {
             let mut cert = capbac::proto::Certificate::new();
-            read_cert(&mut cert);
+            read_from_stdin(&mut cert);
             print_cert(&cert);
         }
         CertificateValidate { validate, pubs } => {
             let mut cert = capbac::proto::Certificate::new();
-            read_cert(&mut cert);
+            read_from_stdin(&mut cert);
             match capbac::Validator::new(&validate, &pubs).validate_cert(&cert, validate.now) {
                 Result::Ok(_) => (),
                 Err(e @ ValidateError::Malformed { .. }) => {

@@ -31,6 +31,12 @@ pub struct CertificateBlueprint {
     pub exp: Option<u64>
 }
 
+pub struct InvokeBlueprint {
+    pub cert: proto::Certificate,
+    pub action: Vec<u8>,
+    pub exp: Option<u64>
+}
+
 #[derive(Error, Debug)]
 pub enum ForgeError {
     #[error("Unexpected OpenSSL error. Invalid private key?")]
@@ -50,7 +56,13 @@ pub enum DelegateError {
 }
 
 #[derive(Error, Debug)]
-pub enum InvokeError {}
+pub enum InvokeError {
+    #[error("Unexpected OpenSSL error. Invalid private key?")]
+    CryptoError {
+        #[from]
+        source: ErrorStack,
+    }
+}
 
 pub struct Holder<'a> {
     me: Url,
@@ -64,16 +76,23 @@ impl<'a> Holder<'a> {
 
     pub fn forge(&self, options: CertificateBlueprint) -> Result<proto::Certificate, ForgeError> {
         let mut proto_payload = proto::Certificate_Payload::new();
-        self.write_payload(&mut proto_payload, options)?;
+        self.write_cert_payload(&mut proto_payload, options)?;
         let proto = self.write_cert(proto_payload)?;
         Ok(proto)
     }
 
     pub fn delegate(&self, cert: proto::Certificate, options: CertificateBlueprint) -> Result<proto::Certificate, DelegateError> {
         let mut proto_payload = proto::Certificate_Payload::new();
-        self.write_payload(&mut proto_payload, options)?;
+        self.write_cert_payload(&mut proto_payload, options)?;
         proto_payload.set_parent(cert);
         let proto = self.write_cert(proto_payload)?;
+        Ok(proto)
+    }
+
+    pub fn invoke(&self, options: InvokeBlueprint) -> Result<proto::Invocation, InvokeError> {
+        let mut proto_payload = proto::Invocation_Payload::new();
+        self.write_invoke_payload(&mut proto_payload, options)?;
+        let proto = self.write_invocation(proto_payload)?;
         Ok(proto)
     }
 
@@ -84,7 +103,7 @@ impl<'a> Holder<'a> {
         Ok(EcdsaSig::sign(&hash, &self.sk)?.to_der()?)
     }
 
-    fn write_payload(&self, proto_payload: &mut proto::Certificate_Payload, options: CertificateBlueprint) -> Result<(), ErrorStack> {
+    fn write_cert_payload(&self, proto_payload: &mut proto::Certificate_Payload, options: CertificateBlueprint) -> Result<(), ErrorStack> {
         proto_payload.set_capability(options.capability);
         match options.exp {
             Some(x) => proto_payload.set_expiration(x),
@@ -101,6 +120,28 @@ impl<'a> Holder<'a> {
             .expect("Protobuf internal error");
 
         let mut proto = proto::Certificate::new();
+        proto.set_signature(self.sign(&bytes)?);
+        proto.set_payload(bytes);
+        Ok(proto)
+    }
+
+    fn write_invoke_payload(&self, proto_payload: &mut proto::Invocation_Payload, options: InvokeBlueprint) -> Result<(), ErrorStack> {
+        proto_payload.set_invoker(self.me.clone().into_string());
+        proto_payload.set_action(options.action);
+        proto_payload.set_certificate(options.cert);
+        match options.exp {
+            Some(x) => proto_payload.set_expiration(x),
+            _ => {}
+        }
+        Ok(())
+    }
+
+    fn write_invocation(&self, proto_payload: proto::Invocation_Payload) -> Result<proto::Invocation, ErrorStack> {
+        let bytes = proto_payload
+            .write_to_bytes()
+            .expect("Protobuf internal error");
+
+        let mut proto = proto::Invocation::new();
         proto.set_signature(self.sign(&bytes)?);
         proto.set_payload(bytes);
         Ok(proto)
