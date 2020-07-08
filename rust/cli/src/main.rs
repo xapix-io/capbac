@@ -12,7 +12,6 @@ use std::process::exit;
 use structopt::StructOpt;
 use url::Url;
 use Result::Err;
-use base64;
 
 fn parse_id_pair(s: &str) -> Result<(Url, EcKey<Public>), Box<dyn Error>> {
     let pos = s
@@ -206,13 +205,49 @@ fn main() {
             read_from_stdin(&mut invocation);
             print_invocation(&invocation);
         }
-        InvocationValidate { validate, pubs } => {
-
-        }
         Certificate { } => {
             let mut cert = capbac::proto::Certificate::new();
             read_from_stdin(&mut cert);
             print_cert(&cert);
+        }
+        InvocationValidate { validate, pubs } => {
+            let mut invocation = capbac::proto::Invocation::new();
+            read_from_stdin(&mut invocation);
+            match capbac::Validator::new(&validate, &pubs).validate_invocation(&invocation, validate.now) {
+                Result::Ok(_) => (),
+                Err(e @ ValidateError::Malformed { .. }) => {
+                    println!("{:#?}", e);
+                    exit(11)
+                }
+                Err(e @ ValidateError::BadURL { .. }) => {
+                    println!("{:#?}", e);
+                    exit(12)
+                }
+                Err(e @ ValidateError::UnknownPub { .. }) => {
+                    println!("{:#?}", e);
+                    exit(12)
+                }
+                Err(e @ ValidateError::BadIssuer { .. }) => {
+                    println!("{:#?}", e);
+                    exit(13)
+                }
+                Err(e @ ValidateError::BadInvoker { .. }) => {
+                    println!("{:#?}", e);
+                    exit(13)
+                }
+                Err(e @ ValidateError::Untrusted { .. }) => {
+                    println!("{:#?}", e);
+                    exit(13)
+                }
+                Err(ValidateError::Expired) => {
+                    println!("Expired");
+                    exit(14)
+                }
+                Err(ValidateError::BadSign) => {
+                    println!("Bad sign");
+                    exit(15)
+                }
+            }
         }
         CertificateValidate { validate, pubs } => {
             let mut cert = capbac::proto::Certificate::new();
@@ -232,6 +267,10 @@ fn main() {
                     exit(12)
                 }
                 Err(e @ ValidateError::BadIssuer { .. }) => {
+                    println!("{:#?}", e);
+                    exit(13)
+                }
+                Err(e @ ValidateError::BadInvoker { .. }) => {
                     println!("{:#?}", e);
                     exit(13)
                 }

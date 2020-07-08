@@ -163,6 +163,8 @@ pub enum ValidateError {
     UnknownPub { url: Url },
     #[error("Issuer {issuer} doesn't match subject {subject}")]
     BadIssuer { subject: Url, issuer: Url },
+    #[error("Invoker {invoker} doesn't match subject {subject}")]
+    BadInvoker { subject: Url, invoker: Url },
     #[error("Expired item")]
     Expired,
     #[error("Bad signature")]
@@ -183,6 +185,42 @@ impl<'a> Validator<'a> {
 
     pub fn validate_cert(&self, cert: &proto::Certificate, now: u64) -> Result<(), ValidateError> {
         self.validate_cert2(None, cert, now)
+    }
+
+    pub fn validate_invocation(&self, invocation: &proto::Invocation, now: u64) -> Result<(), ValidateError> {
+        let mut payload = proto::Invocation_Payload::new();
+        payload.merge_from_bytes(invocation.get_payload())?;
+        if payload.get_expiration() != 0 && payload.get_expiration() < now {
+            return Err(ValidateError::Expired);
+        }
+
+        let invoker = Url::parse(payload.get_invoker()).map_err(|_| ValidateError::BadURL {
+            url: payload.get_invoker().to_string(),
+        })?;
+
+        let invoker_pub = match self.pubs.get(&invoker) {
+            Some(x) => x,
+            None => return Err(ValidateError::UnknownPub { url: invoker }),
+        };
+
+        self.verify(invocation.get_payload(), invocation.get_signature(), invoker_pub)?;
+
+        let cert = payload.get_certificate();
+        let mut cert_payload = proto::Certificate_Payload::new();
+        cert_payload.merge_from_bytes(cert.get_payload())?;
+
+        let subject = Url::parse(cert_payload.get_subject()).map_err(|_| ValidateError::BadURL {
+            url: cert_payload.get_subject().to_string(),
+        })?;
+
+        if cert_payload.get_subject() != payload.get_invoker() {
+            return Err(ValidateError::BadInvoker {
+                invoker: invoker.clone(),
+                subject,
+            })
+        };
+
+        self.validate_cert(cert, now)
     }
 
     fn validate_cert2(
