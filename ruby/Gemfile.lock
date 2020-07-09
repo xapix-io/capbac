@@ -8,9 +8,23 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    diff-lcs (1.4.4)
     ffi (1.13.1)
     minitar (0.9)
     rake (13.0.1)
+    rspec (3.9.0)
+      rspec-core (~> 3.9.0)
+      rspec-expectations (~> 3.9.0)
+      rspec-mocks (~> 3.9.0)
+    rspec-core (3.9.2)
+      rspec-support (~> 3.9.3)
+    rspec-expectations (3.9.2)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.9.0)
+    rspec-mocks (3.9.1)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.9.0)
+    rspec-support (3.9.3)
     thermite (0.13.0)
       minitar (~> 0.5)
       rake (>= 10)
@@ -22,7 +36,8 @@ PLATFORMS
 
 DEPENDENCIES
   capbac!
+  rspec
   thermite
 
 BUNDLED WITH
-   2.0.2
+   2.1.4
