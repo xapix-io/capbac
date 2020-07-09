@@ -1,17 +1,14 @@
 package io.xapix.capbac;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.ECPublicKey;
-import java.util.List;
 
 public class CapBACValidator {
-    private CapBACTrustChecker trustChecker;
-    private CapBACPubs pubs;
+    private final CapBACTrustChecker trustChecker;
+    private final CapBACPubs pubs;
 
     public CapBACValidator(CapBACTrustChecker trustChecker, CapBACPubs pubs) {
         this.trustChecker = trustChecker;

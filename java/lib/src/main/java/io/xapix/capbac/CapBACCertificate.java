@@ -3,16 +3,8 @@ package io.xapix.capbac;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.interfaces.ECPublicKey;
-import java.security.spec.EncodedKeySpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Iterator;
 import java.util.stream.StreamSupport;
 
@@ -118,10 +110,7 @@ public class CapBACCertificate implements Iterable<CapBACCertificate> {
             private CapBACCertificate next = CapBACCertificate.this;
             @Override
             public boolean hasNext() {
-                if (next != null) {
-                    return true;
-                }
-                return false;
+                return next != null;
             }
 
             @Override

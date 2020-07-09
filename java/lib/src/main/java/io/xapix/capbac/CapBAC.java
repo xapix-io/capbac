@@ -1,12 +1,5 @@
 package io.xapix.capbac;
 
-import java.net.URL;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.Signature;
-import java.security.SignatureException;
-import java.security.interfaces.ECPublicKey;
-
 public class CapBAC {
     static String ALG = "SHA256withECDSA";
 

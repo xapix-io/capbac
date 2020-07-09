@@ -10,16 +10,10 @@ import io.xapix.capbac.*;
 import io.xapix.capbac.trust.PatternChecker;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.util.io.pem.PemObject;
-import org.bouncycastle.util.io.pem.PemReader;
 
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
@@ -33,7 +27,6 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import static org.apache.commons.io.FileUtils.readFileToByteArray;
-import static org.apache.commons.io.FileUtils.readFileToString;
 
 public class CapBACCli {
 
@@ -162,11 +155,11 @@ public class CapBACCli {
         long now = new Date().toInstant().toEpochMilli() / 1000;
     }
 
-    private ValidateArgs validateArgs = new ValidateArgs();
-    private HolderArgs holderArgs = new HolderArgs();
-    private PubsArgs pubs = new PubsArgs();
-    private CertificateArgs certArgs = new CertificateArgs();
-    private InvokeArgs invokeArgs = new InvokeArgs();
+    private final ValidateArgs validateArgs = new ValidateArgs();
+    private final HolderArgs holderArgs = new HolderArgs();
+    private final PubsArgs pubs = new PubsArgs();
+    private final CertificateArgs certArgs = new CertificateArgs();
+    private final InvokeArgs invokeArgs = new InvokeArgs();
 
     private void run(String[] argv) {
         Security.addProvider(new BouncyCastleProvider());
@@ -270,10 +263,9 @@ public class CapBACCli {
 
     private CapBACInvocation.Builder makeInvokeBuilder() throws CapBAC.Malformed {
         try {
-            CapBACInvocation.Builder builder = new CapBACInvocation.Builder(
+            return new CapBACInvocation.Builder(
                     new CapBACCertificate(readFileToByteArray(invokeArgs.cert)), invokeArgs.action.getBytes())
                     .withExp(certArgs.exp);
-            return builder;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -289,7 +281,7 @@ public class CapBACCli {
 
 
     private static CapBACCertificate printCertificate() throws CapBAC.Malformed {
-        byte[] bytes = new byte[0];
+        byte[] bytes;
         try {
             bytes = IOUtils.toByteArray(System.in);
         } catch (IOException e) {
@@ -302,7 +294,7 @@ public class CapBACCli {
         CapBACCertificate cert = rootCert;
         try {
             while (cert != null) {
-                CapBACProto.Certificate.Payload payload = null;
+                CapBACProto.Certificate.Payload payload;
                 payload = CapBACProto.Certificate.Payload.parseFrom(cert.getProto().getPayload());
 
                 System.out.println(JsonFormat.printer().print(cert.getProto()));
