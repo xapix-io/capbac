@@ -2,7 +2,5 @@
 
 source 'https://rubygems.org'
 
-gemspec
-
-gem 'rspec'
-gem 'thermite'
+gemspec name: 'capbac'
+gemspec name: 'capbac_cli'

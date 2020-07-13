@@ -1,12 +1,9 @@
 # frozen_string_literal: true
 
-require 'bundler/gem_tasks'
+require 'rubygems/tasks'
 require 'thermite/tasks'
-require 'rspec/core/rake_task'
 
-RSpec::Core::RakeTask.new(:spec)
-
-task default: :spec
+Gem::Tasks.new
 
 Thermite::Tasks.new
 

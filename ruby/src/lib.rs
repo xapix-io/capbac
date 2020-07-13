@@ -83,17 +83,31 @@ methods!(
     }
 
     fn ruby_holder_forge(options: Hash) -> Array {
-        // TODO check everything before unwrap!
+        if let Err(ref _error) = options {
+            VM::raise(Class::from_existing("ArgumentError"), "Options must be a hash");
+        }
+
         let options = options.unwrap();
-        let subject = Url::from(
-            options
-                .at(Symbol::new("subject"))
-                .try_convert_to::<URI>()
-                .unwrap()
-        );
+
+        let subject = options
+            .at(Symbol::new("subject"))
+            .try_convert_to::<URI>();
+
+        if let Err(ref _error) = subject {
+            VM::raise(Class::from_existing("ArgumentError"), "Subject must be an instance of URI");
+        }
+
+        let subject = Url::from(subject.unwrap());
+
         let capability = options
             .at(Symbol::new("capability"))
-            .try_convert_to::<RString>()
+            .try_convert_to::<RString>();
+
+        if let Err(ref _error) = capability {
+            VM::raise(Class::from_existing("ArgumentError"), "Capability must be a string");
+        }
+
+        let capability = capability
             .unwrap().to_string()
             .into_bytes();
 
@@ -119,7 +133,68 @@ methods!(
     }
 
     fn ruby_holder_delegate(cert: Array, options: Hash) -> Array {
-        Array::new()
+        // TODO DRY! decompose options for forge and delegate in separate function
+
+        if let Err(ref _error) = options {
+            VM::raise(Class::from_existing("ArgumentError"), "Options must be a hash");
+        }
+
+        let options = options.unwrap();
+
+        let subject = options
+            .at(Symbol::new("subject"))
+            .try_convert_to::<URI>();
+
+        if let Err(ref _error) = subject {
+            VM::raise(Class::from_existing("ArgumentError"), "Subject must be an instance of URI");
+        }
+
+        let subject = Url::from(subject.unwrap());
+
+        let capability = options
+            .at(Symbol::new("capability"))
+            .try_convert_to::<RString>();
+
+        if let Err(ref _error) = capability {
+            VM::raise(Class::from_existing("ArgumentError"), "Capability must be a string");
+        }
+
+        let capability = capability
+            .unwrap().to_string()
+            .into_bytes();
+
+        let exp = match options.at(Symbol::new("exp")).try_convert_to::<Fixnum>() {
+            Ok(x) => Some(x.to_i64() as u64),
+            _ => None
+        };
+
+        let options = CertificateBlueprint {
+            subject,
+            capability,
+            exp
+        };
+
+        let holder = itself.get_data(&*HOLDER_WRAPPER);
+
+        let mut cert_content: Vec<u8> = Vec::new();
+        for n in cert.unwrap().into_iter() {
+            let n = n.try_convert_to::<Fixnum>();
+
+            if let Err(ref error) = n {
+                VM::raise(error.to_exception(), &error.to_string());
+            }
+
+            cert_content.push(n.unwrap().to_i64() as u8);
+        }
+        let mut cert = capbac::proto::Certificate::new();
+        cert.merge_from_bytes(&cert_content).unwrap();
+
+        let cert = holder.delegate(cert, options).unwrap();
+        let mut res = Array::new();
+        for item in cert.write_to_bytes().unwrap().iter() {
+            res.push(Fixnum::new(i64::from(*item)));
+        };
+        res
     }
 
     fn ruby_holder_invoke(options: Hash) -> Array {
