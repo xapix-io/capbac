@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require_relative 'lib/capbac/version'
+
 Gem::Specification.new do |spec|
   spec.name          = 'capbac'
-  spec.version       = '0.1.0'
+  spec.version       = CapBAC::VERSION
   spec.author        = ['delaguardo']
   spec.summary       = ''
   spec.files         = Dir['lib/**/*', 'src/**/*.rs', 'Cargo.toml', 'LICENSE', 'README.md']

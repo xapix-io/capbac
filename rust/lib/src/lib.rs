@@ -10,7 +10,7 @@ use url::Url;
 pub mod proto;
 
 pub trait Pubs {
-    fn get(&self, id: &Url) -> Option<&EcKey<Public>>;
+    fn get(&self, id: &Url) -> Option<EcKey<Public>>;
 }
 
 pub trait TrustChecker {
@@ -56,13 +56,13 @@ pub enum InvokeError {
     }
 }
 
-pub struct Holder<'a> {
+pub struct Holder {
     me: Url,
-    sk: &'a EcKey<Private>,
+    sk: EcKey<Private>,
 }
 
-impl<'a> Holder<'a> {
-    pub fn new(me: Url, sk: &'a EcKey<Private>) -> Self {
+impl Holder {
+    pub fn new(me: Url, sk: EcKey<Private>) -> Self {
         Holder { me, sk }
     }
 
@@ -162,6 +162,7 @@ pub enum ValidateError {
     #[error("Bad signature")]
     BadSign,
 }
+
 pub struct Validator<'a> {
     trust_checker: &'a dyn TrustChecker,
     pubs: &'a dyn Pubs,
@@ -195,7 +196,7 @@ impl<'a> Validator<'a> {
             None => return Err(ValidateError::UnknownPub { url: invoker }),
         };
 
-        self.verify(invocation.get_payload(), invocation.get_signature(), invoker_pub)?;
+        self.verify(invocation.get_payload(), invocation.get_signature(), &invoker_pub)?;
 
         let cert = payload.get_certificate();
         let mut cert_payload = proto::Certificate_Payload::new();
@@ -260,7 +261,7 @@ impl<'a> Validator<'a> {
             None => return Err(ValidateError::UnknownPub { url: issuer }),
         };
 
-        self.verify(cert.get_payload(), cert.get_signature(), issuer_pub)?;
+        self.verify(cert.get_payload(), cert.get_signature(), &issuer_pub)?;
         Ok(())
     }
 

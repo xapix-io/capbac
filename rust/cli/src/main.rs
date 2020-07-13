@@ -263,8 +263,8 @@ struct PubsArgs {
 }
 
 impl capbac::Pubs for PubsArgs {
-    fn get(&self, id: &Url) -> Option<&EcKey<Public>> {
-        self.pubs.iter().find(|(x, _)| x.eq(id)).map(|(_, x)| x)
+    fn get(&self, id: &Url) -> Option<EcKey<Public>> {
+        self.pubs.iter().find(|(x, _)| x.eq(id)).map(|(_, x)| x.clone())
     }
 }
 
@@ -273,7 +273,7 @@ fn main() {
     let opt = CapBACApp::from_args();
     match opt {
         Forge { holder, cert } => {
-            let cert = capbac::Holder::new(holder.me, &holder.sk)
+            let cert = capbac::Holder::new(holder.me, holder.sk)
                 .forge(cert.into())
                 .unwrap();
             stdout().write(&cert.write_to_bytes().unwrap()).unwrap();
@@ -281,13 +281,13 @@ fn main() {
         Delegate { holder, cert } => {
             let mut parent_cert = capbac::proto::Certificate::new();
             read_from_stdin(&mut parent_cert);
-            let cert = capbac::Holder::new(holder.me, &holder.sk)
+            let cert = capbac::Holder::new(holder.me, holder.sk)
                 .delegate(parent_cert, cert.into())
                 .unwrap();
             stdout().write(&cert.write_to_bytes().unwrap()).unwrap();
         }
         Invoke { holder, invoke } => {
-            let invocation = capbac::Holder::new(holder.me, &holder.sk)
+            let invocation = capbac::Holder::new(holder.me, holder.sk)
                 .invoke(invoke.into())
                 .unwrap();
             stdout().write(&invocation.write_to_bytes().unwrap()).unwrap();
