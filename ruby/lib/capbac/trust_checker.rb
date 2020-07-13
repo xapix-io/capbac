@@ -1,8 +1,5 @@
 module CapBAC
   class TrustChecker
-    def trusted?(x)
-      p x
-      true
-    end
+    def trusted?(id); end
   end
 end

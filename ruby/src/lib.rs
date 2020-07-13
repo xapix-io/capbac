@@ -147,17 +147,19 @@ impl capbac::TrustChecker for IntValidator {
         self.trust_checker
             .send("trusted?", args)
             .try_convert_to::<Boolean>()
-            .unwrap()
+            .unwrap_or(Boolean::new(false))
             .to_bool()
     }
 }
 
 impl capbac::Pubs for IntValidator {
     fn get(&self, id: &Url) -> Option<EcKey<Public>> {
-        let res = self.pubs.send("get", vec![URI::from(id).to_any_object()]);
-        let ok_res = res.try_convert_to::<Array>().unwrap();
+        let res = self.pubs.send("get", vec![URI::from(id).to_any_object()]).try_convert_to::<Array>();
+        if let Err(ref _error) = res {
+            return None
+        }
         let mut pk_content: Vec<u8> = Vec::new();
-        for n in ok_res.into_iter() {
+        for n in res.unwrap().into_iter() {
             let n = n.try_convert_to::<Fixnum>();
 
             if let Err(ref error) = n {
@@ -189,8 +191,6 @@ methods!(
             .wrap_data(validator, &*INT_VALIDATOR_WRAPPER)
     }
 
-    // TODO define exception classes!
-    // TODO rethrow exception!
     fn ruby_validator_validate_cert(cert: Array, now: Fixnum) -> Boolean {
         if let Err(ref error) = cert {
             VM::raise(error.to_exception(), &error.to_string());
@@ -221,7 +221,33 @@ methods!(
         match validator.validate_cert(&cert, now) {
             Result::Ok(_) => Boolean::new(true),
             Err(x) =>  {
-                println!("{}", x);
+                let capbac_class = Class::from_existing("CapBAC");
+                match x {
+                    capbac::ValidateError::Malformed { .. } => {
+                        VM::raise(capbac_class.get_nested_class("Malformed"), &format!("{}", x))
+                    },
+                    capbac::ValidateError::BadURL { .. } => {
+                        VM::raise(capbac_class.get_nested_class("BadURL"), &format!("{}", x))
+                    },
+                    capbac::ValidateError::UnknownPub { .. } => {
+                        VM::raise(capbac_class.get_nested_class("UnknownPub"), &format!("{}", x))
+                    },
+                    capbac::ValidateError::BadIssuer { .. } => {
+                        VM::raise(capbac_class.get_nested_class("BadIssuer"), &format!("{}", x))
+                    },
+                    capbac::ValidateError::BadInvoker { .. } => {
+                        VM::raise(capbac_class.get_nested_class("BadInvoker"), &format!("{}", x))
+                    },
+                    capbac::ValidateError::Untrusted { .. } => {
+                        VM::raise(capbac_class.get_nested_class("Untrusted"), &format!("{}", x))
+                    },
+                    capbac::ValidateError::Expired => {
+                        VM::raise(capbac_class.get_nested_class("Expired"), &format!("{}", x))
+                    }
+                    capbac::ValidateError::BadSign => {
+                        VM::raise(capbac_class.get_nested_class("BadSign"), &format!("{}", x))
+                    }
+                }
                 Boolean::new(false)
             }
         }
