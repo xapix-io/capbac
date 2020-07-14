@@ -14,6 +14,5 @@ rutie = "0.6.1"
 url = "2.1"
 openssl = "0.10"
 lazy_static = "1"
-base64 = "0.12.3"
 protobuf = "~2"
 capbac = { path = "../rust/lib" }
