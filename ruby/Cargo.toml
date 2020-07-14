@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ruru = "0.9"
+rutie = "0.6.1"
 url = "2.1"
 openssl = "0.10"
 lazy_static = "1"

@@ -12,7 +12,8 @@ Gem::Specification.new do |spec|
   spec.files         = Dir['lib/**/*', 'src/**/*.rs', 'Cargo.toml', 'LICENSE', 'README.md']
   spec.require_paths = ['lib']
   spec.extensions << 'ext/Rakefile'
-  spec.add_runtime_dependency 'thermite', '~> 0.13.0'
+
+  spec.add_dependency 'rutie', '~> 0.0.3'
 
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'rake', '~> 13.0.1'
