@@ -7,7 +7,8 @@ edition = "2018"
 [lib]
 crate-type = ["cdylib"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[registries]
+xapix-registry = { index = "https://github.com/xapix-io/rust-index.git" }
 
 [dependencies]
 rutie = "0.6.1"
@@ -15,4 +16,4 @@ url = "2.1"
 openssl = "0.10"
 lazy_static = "1"
 protobuf = "~2"
-capbac = { path = "../rust/lib" }
+capbac = "0.1.0"
