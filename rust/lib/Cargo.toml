@@ -9,7 +9,7 @@ documentation = "https://docs.rs/capbac"
 homepage = "http://capbac.org"
 repository = "https://github.com/xapix-io/capbac"
 readme = "README.md"
-keywords = ["security", "capbac", "command-line tool"]
+keywords = ["security", "capbac"]
 license = "MIT"
 
 [dependencies]
