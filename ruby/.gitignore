@@ -12,5 +12,6 @@
 
 # Rust specific files
 /target/
+**/*.so
 Cargo.lock
 mkmf.log
