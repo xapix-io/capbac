@@ -2,7 +2,7 @@ use openssl::ec::EcKey;
 use openssl::ecdsa::EcdsaSig;
 use openssl::error::ErrorStack;
 use openssl::pkey::{Private, Public};
-use protobuf::{Message};
+use protobuf::Message;
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 use url::Url;
@@ -20,13 +20,13 @@ pub trait TrustChecker {
 pub struct CertificateBlueprint {
     pub subject: Url,
     pub capability: Vec<u8>,
-    pub exp: Option<u64>
+    pub exp: Option<u64>,
 }
 
 pub struct InvokeBlueprint {
     pub cert: proto::Certificate,
     pub action: Vec<u8>,
-    pub exp: Option<u64>
+    pub exp: Option<u64>,
 }
 
 #[derive(Error, Debug)]
@@ -44,7 +44,7 @@ pub enum DelegateError {
     CryptoError {
         #[from]
         source: ErrorStack,
-    }
+    },
 }
 
 #[derive(Error, Debug)]
@@ -53,7 +53,7 @@ pub enum InvokeError {
     CryptoError {
         #[from]
         source: ErrorStack,
-    }
+    },
 }
 
 pub struct Holder {
@@ -73,7 +73,11 @@ impl Holder {
         Ok(proto)
     }
 
-    pub fn delegate(&self, cert: proto::Certificate, options: CertificateBlueprint) -> Result<proto::Certificate, DelegateError> {
+    pub fn delegate(
+        &self,
+        cert: proto::Certificate,
+        options: CertificateBlueprint,
+    ) -> Result<proto::Certificate, DelegateError> {
         let mut proto_payload = proto::Certificate_Payload::new();
         self.write_cert_payload(&mut proto_payload, options)?;
         proto_payload.set_parent(cert);
@@ -95,7 +99,11 @@ impl Holder {
         Ok(EcdsaSig::sign(&hash, &self.sk)?.to_der()?)
     }
 
-    fn write_cert_payload(&self, proto_payload: &mut proto::Certificate_Payload, options: CertificateBlueprint) -> Result<(), ErrorStack> {
+    fn write_cert_payload(
+        &self,
+        proto_payload: &mut proto::Certificate_Payload,
+        options: CertificateBlueprint,
+    ) -> Result<(), ErrorStack> {
         proto_payload.set_capability(options.capability);
         match options.exp {
             Some(x) => proto_payload.set_expiration(x),
@@ -106,7 +114,10 @@ impl Holder {
         Ok(())
     }
 
-    fn write_cert(&self, proto_payload: proto::Certificate_Payload) -> Result<proto::Certificate, ErrorStack> {
+    fn write_cert(
+        &self,
+        proto_payload: proto::Certificate_Payload,
+    ) -> Result<proto::Certificate, ErrorStack> {
         let bytes = proto_payload
             .write_to_bytes()
             .expect("Protobuf internal error");
@@ -117,7 +128,11 @@ impl Holder {
         Ok(proto)
     }
 
-    fn write_invoke_payload(&self, proto_payload: &mut proto::Invocation_Payload, options: InvokeBlueprint) -> Result<(), ErrorStack> {
+    fn write_invoke_payload(
+        &self,
+        proto_payload: &mut proto::Invocation_Payload,
+        options: InvokeBlueprint,
+    ) -> Result<(), ErrorStack> {
         proto_payload.set_invoker(self.me.clone().into_string());
         proto_payload.set_action(options.action);
         proto_payload.set_certificate(options.cert);
@@ -128,7 +143,10 @@ impl Holder {
         Ok(())
     }
 
-    fn write_invocation(&self, proto_payload: proto::Invocation_Payload) -> Result<proto::Invocation, ErrorStack> {
+    fn write_invocation(
+        &self,
+        proto_payload: proto::Invocation_Payload,
+    ) -> Result<proto::Invocation, ErrorStack> {
         let bytes = proto_payload
             .write_to_bytes()
             .expect("Protobuf internal error");
@@ -180,7 +198,11 @@ impl<'a> Validator<'a> {
         self.validate_cert2(None, cert, now)
     }
 
-    pub fn validate_invocation(&self, invocation: &proto::Invocation, now: u64) -> Result<(), ValidateError> {
+    pub fn validate_invocation(
+        &self,
+        invocation: &proto::Invocation,
+        now: u64,
+    ) -> Result<(), ValidateError> {
         let mut payload = proto::Invocation_Payload::new();
         payload.merge_from_bytes(invocation.get_payload())?;
         if payload.get_expiration() != 0 && payload.get_expiration() < now {
@@ -196,21 +218,26 @@ impl<'a> Validator<'a> {
             None => return Err(ValidateError::UnknownPub { url: invoker }),
         };
 
-        self.verify(invocation.get_payload(), invocation.get_signature(), &invoker_pub)?;
+        self.verify(
+            invocation.get_payload(),
+            invocation.get_signature(),
+            &invoker_pub,
+        )?;
 
         let cert = payload.get_certificate();
         let mut cert_payload = proto::Certificate_Payload::new();
         cert_payload.merge_from_bytes(cert.get_payload())?;
 
-        let subject = Url::parse(cert_payload.get_subject()).map_err(|_| ValidateError::BadURL {
-            url: cert_payload.get_subject().to_string(),
-        })?;
+        let subject =
+            Url::parse(cert_payload.get_subject()).map_err(|_| ValidateError::BadURL {
+                url: cert_payload.get_subject().to_string(),
+            })?;
 
         if cert_payload.get_subject() != payload.get_invoker() {
             return Err(ValidateError::BadInvoker {
                 invoker: invoker.clone(),
                 subject,
-            })
+            });
         };
 
         self.validate_cert(cert, now)

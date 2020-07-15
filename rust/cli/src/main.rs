@@ -1,9 +1,11 @@
 use capbac::{self, ValidateError};
+use openssl::base64;
 use openssl::ec::EcKey;
 use openssl::pkey::PKey;
 use openssl::pkey::{Private, Public};
 use protobuf::Message;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fmt::Debug;
 use std::io::{stdin, stdout, Read, Write};
@@ -12,8 +14,6 @@ use std::process::exit;
 use structopt::StructOpt;
 use url::Url;
 use Result::Err;
-use openssl::base64;
-use serde::{Serialize, Deserialize};
 
 fn parse_id_pair(s: &str) -> Result<(Url, EcKey<Public>), Box<dyn Error>> {
     let pos = s
@@ -21,7 +21,10 @@ fn parse_id_pair(s: &str) -> Result<(Url, EcKey<Public>), Box<dyn Error>> {
         .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{}`", s))?;
     let path: PathBuf = s[pos + 1..].parse()?;
     let der_content = &read_file(&path)?;
-    Ok((s[..pos].parse()?, PKey::public_key_from_der(der_content)?.ec_key()?))
+    Ok((
+        s[..pos].parse()?,
+        PKey::public_key_from_der(der_content)?.ec_key()?,
+    ))
 }
 
 fn read_file(path: &std::path::Path) -> Result<Vec<u8>, Box<dyn Error>> {
@@ -66,7 +69,7 @@ struct JsonCertPayload<'a> {
     issuer: &'a str,
     subject: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
-    expiration: Option<u64>
+    expiration: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -81,20 +84,20 @@ struct JsonInvocationPayload<'a> {
     invoker: &'a str,
     action: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
-    expiration: Option<u64>
+    expiration: Option<u64>,
 }
 
 fn print_cert(cert: &capbac::proto::Certificate) {
     let json_cert = JsonCertificate {
         payload: &base64::encode_block(cert.get_payload()),
-        signature: &base64::encode_block(cert.get_signature())
+        signature: &base64::encode_block(cert.get_signature()),
     };
     let mut payload = capbac::proto::Certificate_Payload::new();
     payload.merge_from_bytes(cert.get_payload()).unwrap();
     let parent_cert = payload.get_parent();
     let parent_cert = JsonCertificate {
         payload: &base64::encode_block(parent_cert.get_payload()),
-        signature: &base64::encode_block(parent_cert.get_signature())
+        signature: &base64::encode_block(parent_cert.get_signature()),
     };
     let parent_payload = if payload.has_parent() {
         Some(parent_cert)
@@ -111,10 +114,13 @@ fn print_cert(cert: &capbac::proto::Certificate) {
         capability: &base64::encode_block(payload.get_capability()),
         issuer: payload.get_issuer(),
         subject: payload.get_subject(),
-        expiration: exp
+        expiration: exp,
     };
     println!("{}", serde_json::to_string_pretty(&json_cert).unwrap());
-    println!("{}", serde_json::to_string_pretty(&json_cert_payload).unwrap());
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&json_cert_payload).unwrap()
+    );
     if payload.has_parent() {
         print_cert(payload.get_parent());
     }
@@ -123,14 +129,14 @@ fn print_cert(cert: &capbac::proto::Certificate) {
 fn print_invocation(invocation: &capbac::proto::Invocation) {
     let json_inv = JsonInvocation {
         payload: &base64::encode_block(invocation.get_payload()),
-        signature: &base64::encode_block(invocation.get_signature())
+        signature: &base64::encode_block(invocation.get_signature()),
     };
     let mut payload = capbac::proto::Invocation_Payload::new();
     payload.merge_from_bytes(invocation.get_payload()).unwrap();
     let cert = payload.get_certificate();
     let json_cert = JsonCertificate {
         payload: &base64::encode_block(cert.get_payload()),
-        signature: &base64::encode_block(cert.get_signature())
+        signature: &base64::encode_block(cert.get_signature()),
     };
     let exp = if payload.get_expiration() != 0 {
         Some(payload.get_expiration())
@@ -141,10 +147,13 @@ fn print_invocation(invocation: &capbac::proto::Invocation) {
         certificate: json_cert,
         invoker: payload.get_invoker(),
         action: &base64::encode_block(payload.get_action()),
-        expiration: exp
+        expiration: exp,
     };
     println!("{}", serde_json::to_string_pretty(&json_inv).unwrap());
-    println!("{}", serde_json::to_string_pretty(&json_inv_payload).unwrap());
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&json_inv_payload).unwrap()
+    );
     print_cert(cert);
 }
 
@@ -161,36 +170,32 @@ enum CapBACApp {
         #[structopt(flatten)]
         holder: HolderArgs,
         #[structopt(flatten)]
-        cert: CertArgs
+        cert: CertArgs,
     },
 
     Invoke {
         #[structopt(flatten)]
         holder: HolderArgs,
         #[structopt(flatten)]
-        invoke: InvokeArgs
+        invoke: InvokeArgs,
     },
 
-    Invocation {
-
-    },
+    Invocation {},
 
     InvocationValidate {
         #[structopt(flatten)]
         pubs: PubsArgs,
         #[structopt(flatten)]
-        validate: ValidateArgs
+        validate: ValidateArgs,
     },
 
-    Certificate {
-
-    },
+    Certificate {},
 
     CertificateValidate {
         #[structopt(flatten)]
         pubs: PubsArgs,
         #[structopt(flatten)]
-        validate: ValidateArgs
+        validate: ValidateArgs,
     },
 }
 
@@ -241,7 +246,7 @@ impl Into<capbac::CertificateBlueprint> for CertArgs {
         capbac::CertificateBlueprint {
             subject: self.subject,
             capability: self.capability.as_bytes().to_vec(),
-            exp: self.exp
+            exp: self.exp,
         }
     }
 }
@@ -251,7 +256,7 @@ impl Into<capbac::InvokeBlueprint> for InvokeArgs {
         capbac::InvokeBlueprint {
             action: self.action.as_bytes().to_vec(),
             cert: self.cert,
-            exp: self.exp
+            exp: self.exp,
         }
     }
 }
@@ -264,7 +269,10 @@ struct PubsArgs {
 
 impl capbac::Pubs for PubsArgs {
     fn get(&self, id: &Url) -> Option<EcKey<Public>> {
-        self.pubs.iter().find(|(x, _)| x.eq(id)).map(|(_, x)| x.clone())
+        self.pubs
+            .iter()
+            .find(|(x, _)| x.eq(id))
+            .map(|(_, x)| x.clone())
     }
 }
 
@@ -290,14 +298,16 @@ fn main() {
             let invocation = capbac::Holder::new(holder.me, holder.sk)
                 .invoke(invoke.into())
                 .unwrap();
-            stdout().write(&invocation.write_to_bytes().unwrap()).unwrap();
+            stdout()
+                .write(&invocation.write_to_bytes().unwrap())
+                .unwrap();
         }
-        Invocation { } => {
+        Invocation {} => {
             let mut invocation = capbac::proto::Invocation::new();
             read_from_stdin(&mut invocation);
             print_invocation(&invocation);
         }
-        Certificate { } => {
+        Certificate {} => {
             let mut cert = capbac::proto::Certificate::new();
             read_from_stdin(&mut cert);
             print_cert(&cert);
@@ -305,7 +315,9 @@ fn main() {
         InvocationValidate { validate, pubs } => {
             let mut invocation = capbac::proto::Invocation::new();
             read_from_stdin(&mut invocation);
-            match capbac::Validator::new(&validate, &pubs).validate_invocation(&invocation, validate.now) {
+            match capbac::Validator::new(&validate, &pubs)
+                .validate_invocation(&invocation, validate.now)
+            {
                 Result::Ok(_) => (),
                 Err(e @ ValidateError::Malformed { .. }) => {
                     println!("{:#?}", e);

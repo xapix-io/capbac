@@ -4,7 +4,7 @@ name: Rust impl
 
 jobs:
   check:
-    name: Check
+    name: Check + Rustfmt + Clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -13,33 +13,10 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - run: cd rust && cargo check && cd ..
-      - run: cd tests && cargo check && cd ..
-
-  fmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - run: rustup component add rustfmt
-      - run: cd rust && cargo fmt --all -- --check && cd ..
-      - run: cd tests && cargo fmt --all -- --check && cd ..
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - run: rustup component add clippy
-      - run: cd rust && cargo clippy -- -D warnings && cd ..
-      - run: cd tests && cargo clippy -- -D warnings && cd ..
+      - run: rustup component add rustfmt clippy
+      - run: |
+          pushd rust
+          cargo check
+          cargo fmt --all -- --check
+          cargo clippy -- -D warnings
+          popd

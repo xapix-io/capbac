@@ -9,5 +9,6 @@ fn main() {
         .customize(Customize {
             ..Default::default()
         })
-        .run().unwrap();
+        .run()
+        .unwrap();
 }
