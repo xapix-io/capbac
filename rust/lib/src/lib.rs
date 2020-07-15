@@ -105,7 +105,9 @@ impl Holder {
         options: CertificateBlueprint,
     ) -> Result<(), ErrorStack> {
         proto_payload.set_capability(options.capability);
-        if let Some(x) = options.exp { proto_payload.set_expiration(x) }
+        if let Some(x) = options.exp {
+            proto_payload.set_expiration(x)
+        }
         proto_payload.set_issuer(self.me.clone().into_string());
         proto_payload.set_subject(options.subject.to_string());
         Ok(())
@@ -133,7 +135,9 @@ impl Holder {
         proto_payload.set_invoker(self.me.clone().into_string());
         proto_payload.set_action(options.action);
         proto_payload.set_certificate(options.cert);
-        if let Some(x) = options.exp { proto_payload.set_expiration(x) }
+        if let Some(x) = options.exp {
+            proto_payload.set_expiration(x)
+        }
         Ok(())
     }
 
@@ -228,10 +232,7 @@ impl<'a> Validator<'a> {
             })?;
 
         if cert_payload.get_subject() != payload.get_invoker() {
-            return Err(ValidateError::BadInvoker {
-                invoker,
-                subject,
-            });
+            return Err(ValidateError::BadInvoker { invoker, subject });
         };
 
         self.validate_cert(cert, now)

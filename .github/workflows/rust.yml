@@ -16,9 +16,10 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add rustfmt clippy
-      - run: |
-          pushd rust
-          cargo check
-          cargo fmt --all -- --check
-          cargo clippy -- -D warnings
-          popd
+      - run: cd rust
+      - name: Check
+        run: cargo check
+      - name: Rustfmt
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy -- -D warnings
