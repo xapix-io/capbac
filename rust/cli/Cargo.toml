@@ -13,7 +13,7 @@ keywords = ["security", "capbac"]
 license = "MIT"
 
 [dependencies]
-protobuf = "~2"
+protobuf = "2.16.2"
 structopt = "0.3"
 ring = "0.16.9"
 url = "2.1.0"

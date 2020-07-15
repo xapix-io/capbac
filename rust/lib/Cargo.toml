@@ -13,7 +13,7 @@ keywords = ["security", "capbac"]
 license = "MIT"
 
 [dependencies]
-protobuf = "~2"
+protobuf = "2.16.2"
 url = "2.1"
 openssl = "0.10"
 thiserror = "1.0"
@@ -21,7 +21,3 @@ sha2 = "0.8"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-
-[build-dependencies]
-protoc = "~2"
-protoc-rust = "~2"
