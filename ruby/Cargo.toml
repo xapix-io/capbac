@@ -1,6 +1,6 @@
 [package]
 name = "capbac-ruby"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Kirill Chernyshov <delaguardo@gmail.com>"]
 edition = "2018"
 
@@ -13,4 +13,4 @@ url = "2.1"
 openssl = "0.10"
 lazy_static = "1"
 protobuf = "~2"
-capbac = "0.1.0"
+capbac = "0.2.0"
