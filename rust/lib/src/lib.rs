@@ -277,10 +277,8 @@ impl<'a> Validator<'a> {
 
         if payload.has_parent() {
             self.validate_cert2(Some(&issuer), payload.get_parent(), now)?
-        } else {
-            if !self.trust_checker.is_trusted(&issuer) {
-                return Err(ValidateError::Untrusted { issuer });
-            }
+        } else if !self.trust_checker.is_trusted(&issuer) {
+            return Err(ValidateError::Untrusted { issuer });
         }
 
         let issuer_pub = match self.pubs.get(&issuer) {
