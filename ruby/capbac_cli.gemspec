@@ -13,9 +13,9 @@ Gem::Specification.new do |spec|
   spec.summary       = 'Command line utility for Capability-based Access Control model'
   spec.homepage      = 'http://capbac.org'
   spec.bindir        = 'exe'
-  spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
-  spec.files         = Dir['lib/**/*', 'src/**/*.rs', 'Cargo.toml', 'LICENSE', 'README.md']
-  spec.require_paths = ['lib']
+  spec.executables << 'capbac-cli'
+  spec.files         = Dir['exe/**/*', 'cli_lib/**/*', 'LICENSE', 'README.md']
+  spec.require_paths = ['cli_lib']
 
   spec.add_dependency 'capbac', CapBAC::VERSION
   spec.add_dependency 'commander', '~> 4.5.2'
