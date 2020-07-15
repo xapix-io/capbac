@@ -92,7 +92,7 @@ impl Holder {
         Ok(proto)
     }
 
-    fn sign(&self, msg: &Vec<u8>) -> Result<Vec<u8>, ErrorStack> {
+    fn sign(&self, msg: &[u8]) -> Result<Vec<u8>, ErrorStack> {
         let mut hasher = Sha256::new();
         hasher.input(msg);
         let hash = hasher.result();
@@ -105,10 +105,7 @@ impl Holder {
         options: CertificateBlueprint,
     ) -> Result<(), ErrorStack> {
         proto_payload.set_capability(options.capability);
-        match options.exp {
-            Some(x) => proto_payload.set_expiration(x),
-            _ => {}
-        }
+        if let Some(x) = options.exp { proto_payload.set_expiration(x) }
         proto_payload.set_issuer(self.me.clone().into_string());
         proto_payload.set_subject(options.subject.to_string());
         Ok(())
@@ -136,10 +133,7 @@ impl Holder {
         proto_payload.set_invoker(self.me.clone().into_string());
         proto_payload.set_action(options.action);
         proto_payload.set_certificate(options.cert);
-        match options.exp {
-            Some(x) => proto_payload.set_expiration(x),
-            _ => {}
-        }
+        if let Some(x) = options.exp { proto_payload.set_expiration(x) }
         Ok(())
     }
 
@@ -235,7 +229,7 @@ impl<'a> Validator<'a> {
 
         if cert_payload.get_subject() != payload.get_invoker() {
             return Err(ValidateError::BadInvoker {
-                invoker: invoker.clone(),
+                invoker,
                 subject,
             });
         };
@@ -263,16 +257,13 @@ impl<'a> Validator<'a> {
             url: payload.get_issuer().to_string(),
         })?;
 
-        match next_issuer {
-            Some(issuer) => {
-                if issuer != &subject {
-                    return Err(ValidateError::BadIssuer {
-                        issuer: issuer.clone(),
-                        subject,
-                    });
-                }
+        if let Some(issuer) = next_issuer {
+            if issuer != &subject {
+                return Err(ValidateError::BadIssuer {
+                    issuer: issuer.clone(),
+                    subject,
+                });
             }
-            None => {}
         }
 
         if payload.has_parent() {

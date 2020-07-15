@@ -284,7 +284,7 @@ fn main() {
             let cert = capbac::Holder::new(holder.me, holder.sk)
                 .forge(cert.into())
                 .unwrap();
-            stdout().write(&cert.write_to_bytes().unwrap()).unwrap();
+            stdout().write_all(&cert.write_to_bytes().unwrap()).unwrap();
         }
         Delegate { holder, cert } => {
             let mut parent_cert = capbac::proto::Certificate::new();
@@ -292,14 +292,14 @@ fn main() {
             let cert = capbac::Holder::new(holder.me, holder.sk)
                 .delegate(parent_cert, cert.into())
                 .unwrap();
-            stdout().write(&cert.write_to_bytes().unwrap()).unwrap();
+            stdout().write_all(&cert.write_to_bytes().unwrap()).unwrap();
         }
         Invoke { holder, invoke } => {
             let invocation = capbac::Holder::new(holder.me, holder.sk)
                 .invoke(invoke.into())
                 .unwrap();
             stdout()
-                .write(&invocation.write_to_bytes().unwrap())
+                .write_all(&invocation.write_to_bytes().unwrap())
                 .unwrap();
         }
         Invocation {} => {
