@@ -7,9 +7,6 @@ edition = "2018"
 [lib]
 crate-type = ["cdylib"]
 
-[registries]
-xapix-registry = { index = "https://github.com/xapix-io/rust-index.git" }
-
 [dependencies]
 rutie = "0.6.1"
 url = "2.1"

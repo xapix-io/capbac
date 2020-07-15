@@ -4,3 +4,7 @@ source 'https://rubygems.org'
 
 gemspec name: 'capbac'
 gemspec name: 'capbac_cli'
+
+group :development do
+  gem 'rake'
+end
