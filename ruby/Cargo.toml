@@ -11,6 +11,7 @@ crate-type = ["cdylib"]
 rutie = "0.6.1"
 url = "2.1"
 openssl = "0.10"
+ring = "0.16.15"
 lazy_static = "1"
 protobuf = "2.16.2"
 capbac = "0.2.1"

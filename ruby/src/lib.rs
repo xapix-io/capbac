@@ -10,6 +10,11 @@ use openssl::ec::EcKey;
 use protobuf::{Message};
 use std::fmt;
 
+use ring::{
+    rand,
+    signature::{self, KeyPair, EcdsaKeyPair},
+};
+
 class!(URI);
 
 impl VerifiedObject for URI {
@@ -411,6 +416,33 @@ methods!(
     }
 );
 
+class!(KeyGen);
+
+methods!(
+    KeyGen,
+    itself,
+
+    fn ruby_generate_keypair() -> Hash {
+        let rng = rand::SystemRandom::new();
+        let key_pair = EcdsaKeyPair::generate_pkcs8(&signature::ECDSA_P256_SHA256_FIXED_SIGNING, &rng).unwrap();
+        let mut sk = Array::new();
+        for item in key_pair.as_ref().iter() {
+            sk.push(Fixnum::new(i64::from(*item)));
+        };
+
+        let key_pair = EcdsaKeyPair::from_pkcs8(&signature::ECDSA_P256_SHA256_FIXED_SIGNING, &key_pair.as_ref()).unwrap();
+        let mut pk = Array::new();
+        for item in key_pair.public_key().as_ref().iter() {
+            pk.push(Fixnum::new(i64::from(*item)));
+        };
+
+        let mut res = Hash::new();
+        res.store(Symbol::new("sk"), sk);
+        res.store(Symbol::new("pk"), pk);
+        res
+    }
+);
+
 #[allow(non_snake_case)]
 #[no_mangle]
 pub extern "C" fn Init_capbac() {
@@ -426,6 +458,10 @@ pub extern "C" fn Init_capbac() {
             itself.def_self("new", ruby_validator_new);
             itself.def("validate_cert", ruby_validator_validate_cert);
             itself.def("validate_invocation", ruby_validator_validate_invocation);
+        });
+
+        itself.define_nested_class("KeyPair", None).define(|itself| {
+            itself.def("generate!", ruby_generate_keypair);
         });
     });
 }

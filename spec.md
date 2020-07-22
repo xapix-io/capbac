@@ -9,19 +9,19 @@ caveat : Exp int
 
 holder : id -> sk -> holder
 trust-checker : id -> boolean
+pubs : id -> pk
 
 forge : holder -> subject -> capability -> caveat list -> certificate
 delegate : holder -> subject -> certificate -> capability -> caveat list -> certificate
 invoke : holder -> certificate -> caveat* -> action -> malformed | bad-id | invocation
 
 ids : invocation -> id list
-pubkeys : id -> pk
 action : invocation -> action
 capabilities : invocation -> (root-id, capability list)
 
-validator : trust-checker -> validator
+validator : trust-checker -> pubs -> validator
 
-validate : validator -> pubkeys -> invocation -> now -> ok | malformed | bad-id | invalid | bad-sign | expired
+validate : validator -> invocation -> now -> ok | malformed | bad-id | invalid | bad-sign | expired
 ```
 
 ## Structure
@@ -30,7 +30,7 @@ validate : validator -> pubkeys -> invocation -> now -> ok | malformed | bad-id 
 
 headers = issuer subject exp?
 
-certificate = certificate? headers capability signature 
+certificate = certificate? headers capability signature
 invocation = certificate+ exp? action signature
 ```
 
@@ -40,7 +40,7 @@ Capabilities and action are opaque to protocol, so they just byte arrays encoded
 
 ## Signing
 
-Certificate 
+Certificate
 
 ```
 signature = sign(payload.subject-pk, issuer-sk)
@@ -89,4 +89,3 @@ Verifier
 * freedom in protocol evolution. For example, we would consider Signature Aggregation algorithms like BLS in the future
 
 ### Why not other encoding
-

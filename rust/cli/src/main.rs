@@ -197,6 +197,8 @@ enum CapBACApp {
         #[structopt(flatten)]
         validate: ValidateArgs,
     },
+
+    KeyGen {},
 }
 
 #[derive(StructOpt, Debug)]
