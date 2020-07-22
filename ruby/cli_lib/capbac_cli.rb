@@ -158,7 +158,7 @@ command 'invocation-validate' do |c|
   end
 end
 
-command 'generate-keypair' do |c|
+command 'key-pair' do |c|
   c.action do |_args, _options|
     say CapBAC::KeyPair.new.generate!
   end
