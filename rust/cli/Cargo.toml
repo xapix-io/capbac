@@ -1,6 +1,6 @@
 [package]
 name = "capbac-cli"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["prepor <ceo@prepor.ru>", "DeLaGuardo <delaguardo@gmail.com>"]
 edition = "2018"
 
@@ -20,4 +20,4 @@ openssl = "0.10.26"
 regex = "1.3.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-capbac = "0.2.0"
+capbac = "0.2.1"
