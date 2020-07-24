@@ -1,25 +1,33 @@
-#[macro_use] extern crate rutie;
-#[macro_use] extern crate lazy_static;
+#[macro_use]
+extern crate rutie;
+#[macro_use]
+extern crate lazy_static;
 
-use rutie::{Module, Class, RString, Object, AnyObject, Array,
-            Fixnum, Hash, Symbol, VM, Boolean, GC, VerifiedObject};
 use capbac::{CertificateBlueprint, InvokeBlueprint};
-use url::Url;
-use openssl::pkey::{PKey, Public};
-use openssl::ec::EcKey;
-use protobuf::{Message};
-use std::fmt;
-
+use openssl::{
+    ec::EcKey,
+    pkey::{PKey, Public},
+};
+use protobuf::Message;
 use ring::{
     rand,
-    signature::{self, KeyPair, EcdsaKeyPair},
+    signature::{self, EcdsaKeyPair, KeyPair},
 };
+use rutie::{
+    AnyObject, Boolean, Class, Encoding, Fixnum, Hash, Module, Object, RString, Symbol,
+    VerifiedObject, GC, VM,
+};
+use std::{fmt, str};
+use url::Url;
 
 class!(URI);
 
 impl VerifiedObject for URI {
     fn is_correct_type<T: Object>(object: &T) -> bool {
-        object.class().ancestors().iter()
+        object
+            .class()
+            .ancestors()
+            .iter()
             .any(|class| *class == Class::from_existing("URI"))
     }
 
@@ -30,108 +38,100 @@ impl VerifiedObject for URI {
 
 impl fmt::Display for URI {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = self.send("to_s", &vec![]).try_convert_to::<RString>().unwrap().to_string();
+        let s = self
+            .protect_send("to_s", &[])
+            .map_err(VM::raise_ex)
+            .unwrap()
+            .try_convert_to::<RString>()
+            .map_err(VM::raise_ex)
+            .unwrap()
+            .to_string();
         write!(f, "{}", s)
     }
 }
 
 impl From<&Url> for URI {
     fn from(url: &Url) -> Self {
-        Class::from_existing("URI").send("parse", &vec![RString::new_utf8(&url.clone().to_string()).to_any_object()]).try_convert_to::<URI>().unwrap()
+        let args = [RString::new_utf8(&url.clone().to_string()).to_any_object()];
+        Class::from_existing("URI")
+            .protect_send("parse", &args)
+            .map_err(VM::raise_ex)
+            .unwrap()
+            .try_convert_to::<URI>()
+            .map_err(VM::raise_ex)
+            .unwrap()
     }
 }
 
 impl From<URI> for Url {
     fn from(uri: URI) -> Self {
-        Url::parse(&uri.to_string()).unwrap()
+        Url::parse(&uri.to_string())
+            .map_err(|_e| {
+                VM::raise(
+                    Class::from_existing("URI").get_nested_class("InvalidURIError"),
+                    &format!("bad URI(is not URI?): {}", uri.to_string()),
+                )
+            })
+            .unwrap()
     }
 }
 
+// TODO CertificateBlueprint -> Result<CertificateBlueprint, Error>
 fn options_to_cert_blueprint(options: Hash) -> CertificateBlueprint {
     let subject = options
         .at(&Symbol::new("subject"))
-        .try_convert_to::<URI>();
+        .try_convert_to::<URI>()
+        .map_err(VM::raise_ex)
+        .unwrap();
 
-    if let Err(ref _error) = subject {
-        VM::raise(Class::from_existing("ArgumentError"), "Subject must be an instance of URI");
-    }
-
-    let subject = Url::from(subject.unwrap());
+    let subject = Url::from(subject);
 
     let capability = options
         .at(&Symbol::new("capability"))
-        .try_convert_to::<RString>();
-
-    if let Err(ref _error) = capability {
-        VM::raise(Class::from_existing("ArgumentError"), "Capability must be a string");
-    }
-
-    let capability = capability
-        .unwrap().to_string()
+        .try_convert_to::<RString>()
+        .map_err(VM::raise_ex)
+        .unwrap()
+        .to_string()
         .into_bytes();
 
     let exp = match options.at(&Symbol::new("exp")).try_convert_to::<Fixnum>() {
         Ok(x) => Some(x.to_i64() as u64),
-        _ => None
+        _ => None,
     };
 
     CertificateBlueprint {
         subject,
         capability,
-        exp
+        exp,
     }
-}
-
-fn array_to_cert(array: Array) -> capbac::proto::Certificate {
-    let mut cert_content: Vec<u8> = Vec::new();
-    for n in array.into_iter() {
-        let n = n.try_convert_to::<Fixnum>();
-
-        if let Err(ref error) = n {
-            VM::raise(error.class(), &error.to_string());
-        }
-
-        cert_content.push(n.unwrap().to_i64() as u8);
-    }
-    let mut cert = capbac::proto::Certificate::new();
-    cert.merge_from_bytes(&cert_content).unwrap();
-    cert
 }
 
 fn options_to_invoke_blueprint(options: Hash) -> InvokeBlueprint {
-
     let cert_content = options
         .at(&Symbol::new("cert"))
-        .try_convert_to::<Array>();
+        .try_convert_to::<RString>()
+        .map_err(VM::raise_ex)
+        .unwrap()
+        .to_string()
+        .into_bytes();
 
-    if let Err(ref _error) = cert_content {
-        VM::raise(Class::from_existing("ArgumentError"), "Certificate must be an array");
-    }
-
-    let cert = array_to_cert(cert_content.unwrap());
+    let mut cert = capbac::proto::Certificate::new();
+    cert.merge_from_bytes(&cert_content).unwrap();
 
     let action = options
         .at(&Symbol::new("action"))
-        .try_convert_to::<RString>();
-
-    if let Err(ref _error) = action {
-        VM::raise(Class::from_existing("ArgumentError"), "Action must be a string");
-    }
-
-    let action = action
-        .unwrap().to_string()
+        .try_convert_to::<RString>()
+        .map_err(VM::raise_ex)
+        .unwrap()
+        .to_string()
         .into_bytes();
 
     let exp = match options.at(&Symbol::new("exp")).try_convert_to::<Fixnum>() {
         Ok(x) => Some(x.to_i64() as u64),
-        _ => None
+        _ => None,
     };
 
-    InvokeBlueprint {
-        cert,
-        action,
-        exp
-    }
+    InvokeBlueprint { cert, action, exp }
 }
 
 wrappable_struct!(capbac::Holder, HolderWrapper, HOLDER_WRAPPER);
@@ -142,87 +142,74 @@ methods!(
     Holder,
     itself,
 
-    fn ruby_holder_new(me: URI, sk: Array) -> AnyObject {
-        if let Err(ref error) = me {
-            VM::raise(error.class(), &error.to_string());
-        }
+    fn ruby_holder_new(me: URI, sk: RString) -> AnyObject {
+        let ruby_me = me.map_err(VM::raise_ex).unwrap().to_string();
 
-        if let Err(ref error) = sk {
-            VM::raise(error.class(), &error.to_string());
-        }
+        let ruby_sk = sk
+            .map_err(VM::raise_ex)
+            .unwrap()
+            .to_string_unchecked();
 
-        let me = Url::parse(&me.unwrap().to_string());
+        let me = Url::parse(&ruby_me)
+            .map_err(|e| VM::raise(Class::from_existing("ArgumentError"), &e.to_string()))
+            .unwrap();
+        let sk = PKey::private_key_from_pkcs8(&ruby_sk.as_bytes())
+            .map_err(|e| {
+                VM::raise(
+                    Class::from_existing("ArgumentError"),
+                    &format!("Wrong secret key formar (not pkcs8?) ({})", e.to_string()),
+                )
+            })
+            .unwrap()
+            .ec_key()
+            .map_err(|e| {
+                VM::raise(
+                    Class::from_existing("ArgumentError"),
+                    &format!("Can't extract EC key ({})", e.to_string()),
+                )
+            })
+            .unwrap();
 
-        if let Err(ref error) = me {
-            VM::raise(Class::from_existing("ArgumentError"), &error.to_string())
-        }
-
-        let mut sk_content: Vec<u8> = Vec::new();
-        for n in sk.unwrap().into_iter() {
-            let n = n.try_convert_to::<Fixnum>();
-
-            if let Err(ref error) = n {
-                VM::raise(error.class(), &error.to_string());
-            }
-
-            sk_content.push(n.unwrap().to_i64() as u8);
-        }
-
-        let holder = capbac::Holder::new(me.unwrap(), PKey::private_key_from_pkcs8(&sk_content).unwrap().ec_key().unwrap());
+        let holder = capbac::Holder::new(me, sk);
 
         Class::from_existing("CapBAC")
             .get_nested_class("Holder")
             .wrap_data(holder, &*HOLDER_WRAPPER)
     }
 
-    fn ruby_holder_forge(options: Hash) -> Array {
-        if let Err(ref _error) = options {
-            VM::raise(Class::from_existing("ArgumentError"), "Options must be a hash");
-        }
-
-        let options = options_to_cert_blueprint(options.unwrap());
-
+    fn ruby_holder_forge(options: Hash) -> RString {
+        let ruby_options = options.map_err(VM::raise_ex).unwrap();
+        let options = options_to_cert_blueprint(ruby_options);
         let holder = itself.get_data(&*HOLDER_WRAPPER);
+
         let cert = holder.forge(options).unwrap();
 
-        let mut res = Array::new();
-        for item in cert.write_to_bytes().unwrap().iter() {
-            res.push(Fixnum::new(i64::from(*item)));
-        };
-        res
+        RString::from_bytes(&cert.write_to_bytes().unwrap(), &Encoding::us_ascii())
     }
 
-    fn ruby_holder_delegate(cert: Array, options: Hash) -> Array {
-        if let Err(ref _error) = options {
-            VM::raise(Class::from_existing("ArgumentError"), "Options must be a hash");
-        }
-
-        let options = options_to_cert_blueprint(options.unwrap());
+    fn ruby_holder_delegate(cert: RString, options: Hash) -> RString {
+        let ruby_options = options.map_err(VM::raise_ex).unwrap();
+        let options = options_to_cert_blueprint(ruby_options);
         let holder = itself.get_data(&*HOLDER_WRAPPER);
-        let cert = array_to_cert(cert.unwrap());
+
+        let cert_content = cert.unwrap().to_string_unchecked();
+
+        let mut cert = capbac::proto::Certificate::new();
+        cert.merge_from_bytes(&cert_content.as_bytes()).unwrap();
 
         let cert = holder.delegate(cert, options).unwrap();
-        let mut res = Array::new();
-        for item in cert.write_to_bytes().unwrap().iter() {
-            res.push(Fixnum::new(i64::from(*item)));
-        };
-        res
+
+        RString::from_bytes(&cert.write_to_bytes().unwrap(), &Encoding::us_ascii())
     }
 
-    fn ruby_holder_invoke(options: Hash) -> Array {
-        if let Err(ref _error) = options {
-            VM::raise(Class::from_existing("ArgumentError"), "Options must be a hash");
-        }
-
-        let options = options_to_invoke_blueprint(options.unwrap());
+    fn ruby_holder_invoke(options: Hash) -> RString {
+        let ruby_options = options.map_err(VM::raise_ex).unwrap();
+        let options = options_to_invoke_blueprint(ruby_options);
         let holder = itself.get_data(&*HOLDER_WRAPPER);
 
         let invocation = holder.invoke(options).unwrap();
-        let mut res = Array::new();
-        for item in invocation.write_to_bytes().unwrap().iter() {
-            res.push(Fixnum::new(i64::from(*item)));
-        };
-        res
+
+        RString::from_bytes(&invocation.write_to_bytes().unwrap(), &Encoding::us_ascii())
     }
 );
 
@@ -235,7 +222,7 @@ impl IntValidator {
     fn new(trust_checker: AnyObject, pubs: AnyObject) -> Self {
         IntValidator {
             trust_checker,
-            pubs
+            pubs,
         }
     }
 }
@@ -244,30 +231,36 @@ impl capbac::TrustChecker for IntValidator {
     fn is_trusted(&self, id: &Url) -> bool {
         let args = vec![URI::from(id).to_any_object()];
         self.trust_checker
-            .send("trusted?", &args)
+            .protect_send("trusted?", &args)
+            .map_err(VM::raise_ex)
+            .unwrap()
             .try_convert_to::<Boolean>()
-            .unwrap_or(Boolean::new(false))
+            .unwrap_or_else(|_| Boolean::new(false))
             .to_bool()
     }
 }
 
 impl capbac::Pubs for IntValidator {
     fn get(&self, id: &Url) -> Option<EcKey<Public>> {
-        let res = self.pubs.send("get", &vec![URI::from(id).to_any_object()]).try_convert_to::<Array>();
-        if let Err(ref _error) = res {
-            return None
-        }
-        let mut pk_content: Vec<u8> = Vec::new();
-        for n in res.unwrap().into_iter() {
-            let n = n.try_convert_to::<Fixnum>();
+        let args = [URI::from(id).to_any_object()];
+        let res = self
+            .pubs
+            .protect_send("get", &args)
+            .map_err(VM::raise_ex)
+            .unwrap()
+            .try_convert_to::<RString>();
 
-            if let Err(ref error) = n {
-                VM::raise(error.class(), &error.to_string());
+        match res {
+            Ok(pk) => {
+                Some(
+                    PKey::public_key_from_der(&pk.to_string_unchecked().as_bytes())
+                        .unwrap()
+                        .ec_key()
+                        .unwrap(),
+                )
             }
-
-            pk_content.push(n.unwrap().to_i64() as u8);
+            Err(_) => None
         }
-        Some(PKey::public_key_from_der(&pk_content).unwrap().ec_key().unwrap())
     }
 }
 
@@ -290,56 +283,48 @@ methods!(
             .wrap_data(validator, &*INT_VALIDATOR_WRAPPER)
     }
 
-    fn ruby_validator_validate_cert(cert: Array, now: Fixnum) -> Boolean {
-        if let Err(ref error) = cert {
-            VM::raise(error.class(), &error.to_string());
-        }
+    fn ruby_validator_validate_cert(cert: RString, now: Fixnum) -> Boolean {
+        let ruby_cert = cert
+            .map_err(VM::raise_ex)
+            .unwrap()
+            .to_string_unchecked();
 
-        if let Err(ref error) = now {
-            VM::raise(error.class(), &error.to_string());
-        }
-
-        let mut cert_content: Vec<u8> = Vec::new();
-        for n in cert.unwrap().into_iter() {
-            let n = n.try_convert_to::<Fixnum>();
-
-            if let Err(ref error) = n {
-                VM::raise(error.class(), &error.to_string());
-            }
-
-            cert_content.push(n.unwrap().to_i64() as u8);
-        }
         let mut cert = capbac::proto::Certificate::new();
-        cert.merge_from_bytes(&cert_content).unwrap();
+        cert.merge_from_bytes(&ruby_cert.as_bytes()).unwrap();
 
-        let now = now.unwrap().to_i64() as u64;
+        let now = now.map_err(VM::raise_ex).unwrap().to_i64() as u64;
 
         let x = itself.get_data(&*INT_VALIDATOR_WRAPPER);
         let validator = capbac::Validator::new(x, x);
 
         match validator.validate_cert(&cert, now) {
             Result::Ok(_) => Boolean::new(true),
-            Err(x) =>  {
+            Err(x) => {
                 let capbac_class = Class::from_existing("CapBAC");
                 match x {
-                    capbac::ValidateError::Malformed { .. } => {
-                        VM::raise(capbac_class.get_nested_class("Malformed"), &format!("{}", x))
-                    },
+                    capbac::ValidateError::Malformed { .. } => VM::raise(
+                        capbac_class.get_nested_class("Malformed"),
+                        &format!("{}", x),
+                    ),
                     capbac::ValidateError::BadURL { .. } => {
                         VM::raise(capbac_class.get_nested_class("BadURL"), &format!("{}", x))
-                    },
-                    capbac::ValidateError::UnknownPub { .. } => {
-                        VM::raise(capbac_class.get_nested_class("UnknownPub"), &format!("{}", x))
-                    },
-                    capbac::ValidateError::BadIssuer { .. } => {
-                        VM::raise(capbac_class.get_nested_class("BadIssuer"), &format!("{}", x))
-                    },
-                    capbac::ValidateError::BadInvoker { .. } => {
-                        VM::raise(capbac_class.get_nested_class("BadInvoker"), &format!("{}", x))
-                    },
-                    capbac::ValidateError::Untrusted { .. } => {
-                        VM::raise(capbac_class.get_nested_class("Untrusted"), &format!("{}", x))
-                    },
+                    }
+                    capbac::ValidateError::UnknownPub { .. } => VM::raise(
+                        capbac_class.get_nested_class("UnknownPub"),
+                        &format!("{}", x),
+                    ),
+                    capbac::ValidateError::BadIssuer { .. } => VM::raise(
+                        capbac_class.get_nested_class("BadIssuer"),
+                        &format!("{}", x),
+                    ),
+                    capbac::ValidateError::BadInvoker { .. } => VM::raise(
+                        capbac_class.get_nested_class("BadInvoker"),
+                        &format!("{}", x),
+                    ),
+                    capbac::ValidateError::Untrusted { .. } => VM::raise(
+                        capbac_class.get_nested_class("Untrusted"),
+                        &format!("{}", x),
+                    ),
                     capbac::ValidateError::Expired => {
                         VM::raise(capbac_class.get_nested_class("Expired"), &format!("{}", x))
                     }
@@ -352,56 +337,50 @@ methods!(
         }
     }
 
-    fn ruby_validator_validate_invocation(invocation: Array, now: Fixnum) -> Boolean {
-        if let Err(ref error) = invocation {
-            VM::raise(error.class(), &error.to_string());
-        }
+    fn ruby_validator_validate_invocation(invocation: RString, now: Fixnum) -> Boolean {
+        let ruby_invocation = invocation
+            .map_err(VM::raise_ex)
+            .unwrap()
+            .to_string_unchecked();
 
-        if let Err(ref error) = now {
-            VM::raise(error.class(), &error.to_string());
-        }
-
-        let mut invocation_content: Vec<u8> = Vec::new();
-        for n in invocation.unwrap().into_iter() {
-            let n = n.try_convert_to::<Fixnum>();
-
-            if let Err(ref error) = n {
-                VM::raise(error.class(), &error.to_string());
-            }
-
-            invocation_content.push(n.unwrap().to_i64() as u8);
-        }
         let mut invocation = capbac::proto::Invocation::new();
-        invocation.merge_from_bytes(&invocation_content).unwrap();
+        invocation
+            .merge_from_bytes(&ruby_invocation.as_bytes())
+            .unwrap();
 
-        let now = now.unwrap().to_i64() as u64;
+        let now = now.map_err(VM::raise_ex).unwrap().to_i64() as u64;
 
         let x = itself.get_data(&*INT_VALIDATOR_WRAPPER);
         let validator = capbac::Validator::new(x, x);
 
         match validator.validate_invocation(&invocation, now) {
             Result::Ok(_) => Boolean::new(true),
-            Err(x) =>  {
+            Err(x) => {
                 let capbac_class = Class::from_existing("CapBAC");
                 match x {
-                    capbac::ValidateError::Malformed { .. } => {
-                        VM::raise(capbac_class.get_nested_class("Malformed"), &format!("{}", x))
-                    },
+                    capbac::ValidateError::Malformed { .. } => VM::raise(
+                        capbac_class.get_nested_class("Malformed"),
+                        &format!("{}", x),
+                    ),
                     capbac::ValidateError::BadURL { .. } => {
                         VM::raise(capbac_class.get_nested_class("BadURL"), &format!("{}", x))
-                    },
-                    capbac::ValidateError::UnknownPub { .. } => {
-                        VM::raise(capbac_class.get_nested_class("UnknownPub"), &format!("{}", x))
-                    },
-                    capbac::ValidateError::BadIssuer { .. } => {
-                        VM::raise(capbac_class.get_nested_class("BadIssuer"), &format!("{}", x))
-                    },
-                    capbac::ValidateError::BadInvoker { .. } => {
-                        VM::raise(capbac_class.get_nested_class("BadInvoker"), &format!("{}", x))
-                    },
-                    capbac::ValidateError::Untrusted { .. } => {
-                        VM::raise(capbac_class.get_nested_class("Untrusted"), &format!("{}", x))
-                    },
+                    }
+                    capbac::ValidateError::UnknownPub { .. } => VM::raise(
+                        capbac_class.get_nested_class("UnknownPub"),
+                        &format!("{}", x),
+                    ),
+                    capbac::ValidateError::BadIssuer { .. } => VM::raise(
+                        capbac_class.get_nested_class("BadIssuer"),
+                        &format!("{}", x),
+                    ),
+                    capbac::ValidateError::BadInvoker { .. } => VM::raise(
+                        capbac_class.get_nested_class("BadInvoker"),
+                        &format!("{}", x),
+                    ),
+                    capbac::ValidateError::Untrusted { .. } => VM::raise(
+                        capbac_class.get_nested_class("Untrusted"),
+                        &format!("{}", x),
+                    ),
                     capbac::ValidateError::Expired => {
                         VM::raise(capbac_class.get_nested_class("Expired"), &format!("{}", x))
                     }
@@ -412,7 +391,6 @@ methods!(
                 Boolean::new(false)
             }
         }
-
     }
 );
 
@@ -424,21 +402,28 @@ methods!(
 
     fn ruby_generate_keypair() -> Hash {
         let rng = rand::SystemRandom::new();
-        let key_pair = EcdsaKeyPair::generate_pkcs8(&signature::ECDSA_P256_SHA256_FIXED_SIGNING, &rng).unwrap();
-        let mut sk = Array::new();
-        for item in key_pair.as_ref().iter() {
-            sk.push(Fixnum::new(i64::from(*item)));
-        };
 
-        let key_pair = EcdsaKeyPair::from_pkcs8(&signature::ECDSA_P256_SHA256_FIXED_SIGNING, &key_pair.as_ref()).unwrap();
-        let mut pk = Array::new();
-        for item in key_pair.public_key().as_ref().iter() {
-            pk.push(Fixnum::new(i64::from(*item)));
-        };
+        let key_pair =
+            EcdsaKeyPair::generate_pkcs8(&signature::ECDSA_P256_SHA256_FIXED_SIGNING, &rng)
+                .unwrap();
+        let sk = key_pair.as_ref();
+
+        let key_pair = EcdsaKeyPair::from_pkcs8(
+            &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
+            &key_pair.as_ref(),
+        )
+        .unwrap();
+        let pk = key_pair.public_key().as_ref();
 
         let mut res = Hash::new();
-        res.store(Symbol::new("sk"), sk);
-        res.store(Symbol::new("pk"), pk);
+        res.store(
+            Symbol::new("sk"),
+            RString::from_bytes(&sk, &Encoding::us_ascii()),
+        );
+        res.store(
+            Symbol::new("pk"),
+            RString::from_bytes(&pk, &Encoding::us_ascii()),
+        );
         res
     }
 );
@@ -454,14 +439,18 @@ pub extern "C" fn Init_capbac() {
             itself.def("invoke", ruby_holder_invoke);
         });
 
-        itself.define_nested_class("Validator", None).define(|itself| {
-            itself.def_self("new", ruby_validator_new);
-            itself.def("validate_cert", ruby_validator_validate_cert);
-            itself.def("validate_invocation", ruby_validator_validate_invocation);
-        });
+        itself
+            .define_nested_class("Validator", None)
+            .define(|itself| {
+                itself.def_self("new", ruby_validator_new);
+                itself.def("validate_cert", ruby_validator_validate_cert);
+                itself.def("validate_invocation", ruby_validator_validate_invocation);
+            });
 
-        itself.define_nested_class("KeyPair", None).define(|itself| {
-            itself.def("generate!", ruby_generate_keypair);
-        });
+        itself
+            .define_nested_class("KeyPair", None)
+            .define(|itself| {
+                itself.def("generate!", ruby_generate_keypair);
+            });
     });
 }

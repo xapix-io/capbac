@@ -21,7 +21,7 @@ class HashPubs < CapBAC::Pubs
     @pubs = {}
     pubs.each do |pub|
       pair = pub.split('=')
-      @pubs[URI.parse(pair[0])] = File.read(pair[1]).bytes.to_a
+      @pubs[URI.parse(pair[0])] = File.read(pair[1])
     end
   end
 
@@ -42,9 +42,9 @@ command :forge do |c|
   c.option '--sk SK', String
   c.option '--exp [EXP]', Integer
   c.action do |_args, options|
-    holder = CapBAC::Holder.new(options.me, File.read(options.sk).bytes.to_a)
+    holder = CapBAC::Holder.new(options.me, File.read(options.sk))
     ios = IO.new STDOUT.fileno
-    cert = holder.forge(subject: options.subject, capability: options.capability).pack('c*')
+    cert = holder.forge(subject: options.subject, capability: options.capability)
     ios.write cert
     ios.close
   end
@@ -57,8 +57,8 @@ command :delegate do |c|
   c.option '--sk SK', String
   c.option '--exp [EXP]', Integer
   c.action do |_args, options|
-    holder = CapBAC::Holder.new(options.me, File.read(options.sk).bytes.to_a)
-    cert = holder.delegate(STDIN.read.bytes.to_a, subject: options.subject, capability: options.capability).pack('c*')
+    holder = CapBAC::Holder.new(options.me, File.read(options.sk))
+    cert = holder.delegate(STDIN.read, subject: options.subject, capability: options.capability)
     ios = IO.new STDOUT.fileno
     ios.write cert
     ios.close
@@ -72,8 +72,8 @@ command :invoke do |c|
   c.option '--sk SK', String
   c.option '--exp EXP', Integer
   c.action do |_args, options|
-    holder = CapBAC::Holder.new(options.me, File.read(options.sk).bytes.to_a)
-    inv = holder.invoke(cert: File.read(options.cert).bytes.to_a, action: options.action, exp: options.exp).pack('c*')
+    holder = CapBAC::Holder.new(options.me, File.read(options.sk))
+    inv = holder.invoke(cert: File.read(options.cert), action: options.action, exp: options.exp)
     ios = IO.new STDOUT.fileno
     ios.write inv
     ios.close
@@ -90,7 +90,7 @@ command 'certificate-validate' do |c|
     pubs = HashPubs.new(pubs)
     validator = CapBAC::Validator.new(trust_checker, pubs)
     begin
-      validator.validate_cert(STDIN.read.bytes.to_a, options.now)
+      validator.validate_cert(STDIN.read, options.now)
     rescue CapBAC::Malformed => e
       say e
       exit 11
@@ -129,7 +129,7 @@ command 'invocation-validate' do |c|
     pubs = HashPubs.new(pubs)
     validator = CapBAC::Validator.new(trust_checker, pubs)
     begin
-      validator.validate_invocation(STDIN.read.bytes.to_a, options.now)
+      validator.validate_invocation(STDIN.read, options.now)
     rescue CapBAC::Malformed => e
       say e
       exit 11
