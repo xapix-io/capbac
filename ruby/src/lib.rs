@@ -15,10 +15,49 @@ use ring::{
 };
 use rutie::{
     AnyObject, Boolean, Class, Encoding, Fixnum, Hash, Module, Object, RString, Symbol,
-    VerifiedObject, GC, VM,
+    VerifiedObject, GC, VM, Array,
 };
 use std::{fmt, str};
 use url::Url;
+
+class!(ASCIIRString);
+
+impl VerifiedObject for ASCIIRString {
+    fn is_correct_type<T: Object>(object: &T) -> bool {
+        object
+            .class()
+            .ancestors()
+            .iter()
+            .any(|class| *class == Class::from_existing("String"))
+    }
+
+    fn error_message() -> &'static str {
+        "Error converting to ASCII String"
+    }
+}
+
+impl From<ASCIIRString> for Vec<u8> {
+    fn from(rstring: ASCIIRString) -> Self {
+        let bytes = rstring
+            .protect_send("bytes", &[])
+            .map_err(VM::raise_ex)
+            .unwrap()
+            .try_convert_to::<Array>()
+            .map_err(VM::raise_ex)
+            .unwrap();
+
+        let mut res = Vec::new();
+
+        for n in bytes.into_iter() {
+            let n = n.try_convert_to::<Fixnum>()
+                .map_err(|e| VM::raise_ex(e))
+                .unwrap();
+
+            res.push(n.to_i64() as u8);
+        }
+        res
+    }
+}
 
 class!(URI);
 
@@ -109,14 +148,12 @@ fn options_to_cert_blueprint(options: Hash) -> CertificateBlueprint {
 fn options_to_invoke_blueprint(options: Hash) -> InvokeBlueprint {
     let cert_content = options
         .at(&Symbol::new("cert"))
-        .try_convert_to::<RString>()
+        .try_convert_to::<ASCIIRString>()
         .map_err(VM::raise_ex)
-        .unwrap()
-        .to_string()
-        .into_bytes();
+        .unwrap();
 
     let mut cert = capbac::proto::Certificate::new();
-    cert.merge_from_bytes(&cert_content).unwrap();
+    cert.merge_from_bytes(&Vec::from(cert_content)).unwrap();
 
     let action = options
         .at(&Symbol::new("action"))
@@ -187,15 +224,15 @@ methods!(
         RString::from_bytes(&cert.write_to_bytes().unwrap(), &Encoding::us_ascii())
     }
 
-    fn ruby_holder_delegate(cert: RString, options: Hash) -> RString {
+    fn ruby_holder_delegate(cert: ASCIIRString, options: Hash) -> RString {
         let ruby_options = options.map_err(VM::raise_ex).unwrap();
         let options = options_to_cert_blueprint(ruby_options);
         let holder = itself.get_data(&*HOLDER_WRAPPER);
 
-        let cert_content = cert.unwrap().to_string_unchecked();
+        let cert_content = Vec::from(cert.map_err(VM::raise_ex).unwrap());
 
         let mut cert = capbac::proto::Certificate::new();
-        cert.merge_from_bytes(&cert_content.as_bytes()).unwrap();
+        cert.merge_from_bytes(&cert_content).unwrap();
 
         let cert = holder.delegate(cert, options).unwrap();
 
