@@ -456,10 +456,10 @@ pub fn run(suite: Suite) {
             cmd: "../rust/target/debug/capbac-cli".to_string(),
             args: vec![],
         },
-        // Impl {
-        //     cmd: "../ruby/exe/capbac-cli".to_string(),
-        //     args: vec![],
-        // }
+        Impl {
+            cmd: "../ruby/exe/capbac-cli".to_string(),
+            args: vec![],
+        }
     ];
 
     for service_impl in &impls {

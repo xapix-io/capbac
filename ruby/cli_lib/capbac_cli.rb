@@ -33,7 +33,7 @@ end
 # :name is optional, otherwise uses the basename of this executable
 program :name, 'CapBAC CLI'
 program :version, CapBAC::VERSION
-program :description, 'Stupid command that prints foo or bar.'
+program :description, 'CapBAC CLI tool to forge, delegate and validate certificates and invocations.'
 
 command :forge do |c|
   c.option '--capability CAPABILITY', String
@@ -155,11 +155,5 @@ command 'invocation-validate' do |c|
       say 'Bad sign'
       exit 15
     end
-  end
-end
-
-command 'key-pair' do |c|
-  c.action do |_args, _options|
-    say CapBAC::KeyPair.new.generate!
   end
 end

@@ -428,31 +428,6 @@ methods!(
     }
 );
 
-class!(KeyGen);
-
-methods!(
-    KeyGen,
-    itself,
-
-    fn ruby_generate_keypair() -> Hash {
-        let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
-        let ec_key = EcKey::generate(&group).unwrap();
-        let pk = ec_key.public_key_to_pem().unwrap();
-        let sk = ec_key.private_key_to_pem().unwrap();
-
-        let mut res = Hash::new();
-        res.store(
-            Symbol::new("sk"),
-            RString::from_bytes(&sk, &Encoding::us_ascii()),
-        );
-        res.store(
-            Symbol::new("pk"),
-            RString::from_bytes(&pk, &Encoding::us_ascii()),
-        );
-        res
-    }
-);
-
 #[allow(non_snake_case)]
 #[no_mangle]
 pub extern "C" fn Init_capbac() {
@@ -470,12 +445,6 @@ pub extern "C" fn Init_capbac() {
                 itself.def_self("new", ruby_validator_new);
                 itself.def("validate_cert", ruby_validator_validate_cert);
                 itself.def("validate_invocation", ruby_validator_validate_invocation);
-            });
-
-        itself
-            .define_nested_class("KeyPair", None)
-            .define(|itself| {
-                itself.def("generate!", ruby_generate_keypair);
             });
     });
 }
