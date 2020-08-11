@@ -5,14 +5,11 @@ extern crate lazy_static;
 
 use capbac::{CertificateBlueprint, InvokeBlueprint};
 use openssl::{
-    ec::EcKey,
+    ec::{EcKey, EcGroup},
     pkey::{PKey, Public},
 };
+use openssl::nid::Nid;
 use protobuf::Message;
-use ring::{
-    rand,
-    signature::{self, EcdsaKeyPair, KeyPair},
-};
 use rutie::{
     AnyObject, Boolean, Class, Encoding, Fixnum, Hash, Module, Object, RString, Symbol,
     VerifiedObject, GC, VM, Array,
@@ -190,7 +187,7 @@ methods!(
         let me = Url::parse(&ruby_me)
             .map_err(|e| VM::raise(Class::from_existing("ArgumentError"), &e.to_string()))
             .unwrap();
-        let sk = PKey::private_key_from_pkcs8(&ruby_sk.as_bytes())
+        let sk = PKey::private_key_from_pem(&ruby_sk.as_bytes())
             .map_err(|e| {
                 VM::raise(
                     Class::from_existing("ArgumentError"),
@@ -290,7 +287,7 @@ impl capbac::Pubs for IntValidator {
         match res {
             Ok(pk) => {
                 Some(
-                    PKey::public_key_from_der(&pk.to_string_unchecked().as_bytes())
+                    PKey::public_key_from_pem(&pk.to_string_unchecked().as_bytes())
                         .unwrap()
                         .ec_key()
                         .unwrap(),
@@ -438,19 +435,10 @@ methods!(
     itself,
 
     fn ruby_generate_keypair() -> Hash {
-        let rng = rand::SystemRandom::new();
-
-        let key_pair =
-            EcdsaKeyPair::generate_pkcs8(&signature::ECDSA_P256_SHA256_FIXED_SIGNING, &rng)
-                .unwrap();
-        let sk = key_pair.as_ref();
-
-        let key_pair = EcdsaKeyPair::from_pkcs8(
-            &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
-            &key_pair.as_ref(),
-        )
-        .unwrap();
-        let pk = key_pair.public_key().as_ref();
+        let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
+        let ec_key = EcKey::generate(&group).unwrap();
+        let pk = ec_key.public_key_to_pem().unwrap();
+        let sk = ec_key.private_key_to_pem().unwrap();
 
         let mut res = Hash::new();
         res.store(

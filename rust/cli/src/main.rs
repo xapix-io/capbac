@@ -23,7 +23,7 @@ fn parse_id_pair(s: &str) -> Result<(Url, EcKey<Public>), Box<dyn Error>> {
     let der_content = &read_file(&path)?;
     Ok((
         s[..pos].parse()?,
-        PKey::public_key_from_der(der_content)?.ec_key()?,
+        PKey::public_key_from_pem(der_content)?.ec_key()?,
     ))
 }
 
@@ -37,7 +37,7 @@ fn read_file(path: &std::path::Path) -> Result<Vec<u8>, Box<dyn Error>> {
 fn parse_priv_key(s: &str) -> Result<EcKey<Private>, Box<dyn Error>> {
     let path = Path::new(s);
     let content = &read_file(&path)?;
-    Ok(PKey::private_key_from_pkcs8(content)?.ec_key()?)
+    Ok(PKey::private_key_from_pem(content)?.ec_key()?)
 }
 
 fn parse_cert(s: &str) -> Result<capbac::proto::Certificate, Box<dyn Error>> {

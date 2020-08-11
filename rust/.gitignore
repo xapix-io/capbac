@@ -1,2 +1,4 @@
+/lib/target/
+/cli/target/
 /target/
 Cargo.lock

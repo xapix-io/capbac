@@ -1,11 +1,11 @@
 PATH
   remote: .
   specs:
-    capbac (0.4.2)
+    capbac (0.4.3)
       rutie (~> 0.0.3)
       thermite (~> 0)
-    capbac_cli (0.4.2)
-      capbac (= 0.4.2)
+    capbac_cli (0.4.3)
+      capbac (= 0.4.3)
       commander (~> 4.5.2)
 
 GEM
